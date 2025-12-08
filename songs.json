@@ -1,0 +1,114 @@
+[
+  {
+    "id": "demo_track",
+    "title": "Neon Drift (Demo)",
+    "artist": "System Generator",
+    "charter": "AI",
+    "tags": ["System"],
+    "cover": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600",
+    "audio": null, 
+    "preview_start": 0,
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert": null
+    }
+  },
+  {
+    "id": "R·I·O·T",
+    "title": "R·I·O·T",
+    "artist": "RAISE A SUILEN",
+    "charter": "Nana_Chan",
+    "tags": ["BanG Dream!", "Official"],
+    "cover": "assets/R·I·O·T.png",
+    "audio": "assets/R·I·O·T.mp3",
+    "preview_start": 15,
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": "assets/R·I·O·T.json",
+      "expert": "assets/R·I·O·T_expert.json"
+    }
+  },
+  {
+    "id": "FIRE BIRD",
+    "title": "FIRE BIRD",
+    "artist": "Roselia",
+    "charter": "Nana_Chan",
+    "tags": ["BanG Dream!", "Official"],
+    "cover": "assets/FIRE BIRD.png",
+    "audio": "assets/FIRE BIRD.mp3",
+    "preview_start": 15,
+    "charts": {
+      "easy": "assets/FIRE BIRD_easy.json",
+      "normal": null,
+      "hard": "assets/FIRE BIRD_hard.json",
+      "expert":"assets/FIRE BIRD_expert.json"
+    }
+  },
+  {
+    "id": "元祖！バンドリちゃんのテーマ",
+    "title": "元祖！バンドリちゃんのテーマ",
+    "artist": "香澄×兰×彩×友希那×心×真白×LAYER×灯×Doloris×阿拉蕾",
+    "charter": "Nana_Chan",
+    "tags": ["BanG Dream!", "Official"],
+    "cover": "assets/元祖！バンドリちゃんのテーマ/cover.png",
+    "audio": "assets/元祖！バンドリちゃんのテーマ/song.mp3",
+    "preview_start": 59,
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": "assets/元祖！バンドリちゃんのテーマ/hard.json",
+      "expert":"assets/元祖！バンドリちゃんのテーマ/expert.json"
+    }
+  },
+  {
+    "id": "ROZEN HORIZON",
+    "title": "ROZEN HORIZON",
+    "artist": "Roselia",
+    "charter": "Nana_Chan",
+    "tags": ["BanG Dream!", "Official"],
+    "cover": "assets/ROZEN HORIZON/cover.jpg",
+    "audio": "assets/ROZEN HORIZON/song.mp3",
+    "preview_start": 96,
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert":"assets/ROZEN HORIZON/expert.json"
+    }
+  },
+  {
+    "id": "SoulStone -噬暗马戏团",
+    "title": "SoulStone -噬暗马戏团",
+    "artist": "SEIFU-MEIGETSU(Drop x Yura Hatsuki)",
+    "charter": "Nana_Chan",
+    "tags": ["太鼓达人", "Official"],
+    "cover": "assets/SoulStone -噬暗马戏团/cover.jpg",
+    "audio": "assets/SoulStone -噬暗马戏团/song.mp3",
+    "preview_start": 56,
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert":"assets/SoulStone -噬暗马戏团/expert.json"
+    }
+  },
+  {
+    "id": "Bling-Bang-Bang-Born（FULL）",
+    "title": "Bling-Bang-Bang-Born（FULL）",
+    "artist": "RAISE A SUILEN",
+    "charter": "Nana_Chan",
+    "tags": ["BanG Dream!", "Official"],
+    "cover": "assets/Bling-Bang-Bang-Born（FULL）/cover.png",
+    "audio": "assets/Bling-Bang-Bang-Born（FULL）/song.mp3",
+    "preview_start": 63,
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert":"assets/Bling-Bang-Bang-Born（FULL）/expert.json"
+    }
+  }
+]

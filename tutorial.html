@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Neon Pulse - 新手教程 (修复版)</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; color: white; font-family: 'Segoe UI', sans-serif; user-select: none; }
+        
+        #bg-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            opacity: 0.5; z-index: 0;
+        }
+
+        canvas { display: block; position: relative; z-index: 1; }
+
+        /* 对话框 */
+        #dialogue-box {
+            position: absolute; 
+            top: 20px; 
+            left: 50%; transform: translateX(-50%);
+            width: 70%; max-width: 800px;
+            background: rgba(0, 0, 0, 0.7); 
+            border: 1px solid #0ff; 
+            border-radius: 10px;
+            padding: 15px 30px; 
+            z-index: 20;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.15);
+            transition: opacity 0.3s;
+            display: flex; flex-direction: column;
+            pointer-events: none; 
+        }
+
+        #speaker-name {
+            color: #0ff; font-weight: bold; font-size: 18px; margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(0,255,255,0.5);
+        }
+
+        #dialogue-text {
+            font-size: 18px; line-height: 1.4; min-height: 50px;
+            color: #eee;
+        }
+
+        #continue-tip {
+            font-size: 12px; color: #888; text-align: right; margin-top: 5px;
+            animation: blink 1s infinite;
+        }
+
+        /* 任务提示 */
+        #task-overlay {
+            position: absolute; 
+            bottom: 10%; 
+            width: 100%; text-align: center;
+            font-size: 28px; font-weight: 900; color: #ffcc00;
+            text-shadow: 0 0 10px #000, 0 0 20px #ffcc00;
+            z-index: 15;
+            display: none;
+            pointer-events: none;
+        }
+
+        @keyframes blink { 50% { opacity: 0.3; } }
+
+        #btn-skip {
+            position: absolute; bottom: 20px; right: 20px; z-index: 30;
+            padding: 8px 16px; background: rgba(0,0,0,0.5); 
+            border: 1px solid #444;
+            color: #aaa; cursor: pointer; border-radius: 20px;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        #btn-skip:hover { border-color: #f05; color: #f05; background: rgba(0,0,0,0.8); }
+    </style>
+</head>
+<body>
+
+<div id="bg-layer"></div>
+<canvas id="gameCanvas"></canvas>
+
+<div id="task-overlay">当前任务：击中音符！</div>
+
+<div id="dialogue-box">
+    <div id="speaker-name">同步助手NanaChan</div>
+    <div id="dialogue-text">欢迎来到 Neon Pulse 连接程序...</div>
+    <div id="continue-tip">按 [Enter] 或 点击屏幕 继续 ▶</div>
+</div>
+
+<button id="btn-skip" onclick="exitTutorial()">跳过教程</button>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // --- 视觉参数 ---
+    const HIT_RADIUS = 260;
+    const LANE_COLORS = ['#ff0055', '#00ffaa', '#00ccff', '#ffcc00', '#d600ff'];
+    const KEYS_MAP = { 'ArrowUp': 0, 'ArrowRight': 1, 'ArrowDown': 2, 'ArrowLeft': 3, 'Space': 4 };
+    
+    // --- 教程状态 ---
+    let width, height, centerX, centerY;
+    let particles = [];
+    let notes = []; 
+    let stepIndex = 0;
+    let waitingForAction = false; 
+    let lastSpawnTime = 0;        
+    
+    // 练习计数状态
+    let practiceCount = 0;
+    let currentTargetCount = 5; 
+    let waveMissed = false; 
+
+    // --- 剧本 ---
+    const SCRIPT = [
+        { type: 'talk', text: "欢迎来到Neon Pulse【离心律动】！我是你的同步助手NanaChan。" },
+        { type: 'talk', text: "我们的系统目前受到未知波段入侵，只有精神力和设备同步才能抵抗它们。" },
+        { type: 'talk', text: "听小七说，你是千里挑一的人才？太好了！" },
+        { type: 'talk', text: "让我来简单介绍一下这个系统怎么用……我相信你！" },
+        { type: 'talk', text: "为了方便使用，小七已经让我将口令转换成【音符】，你只要正确演奏它们就能最大程度抵御敌人。" },
+        { type: 'talk', text: "看到外面的白色圆圈了吗？那是【判定线】，只有当音符与判定线相交时，你的精神力信号才能最大程度与设备同步。" },
+        { type: 'talk', text: "……" },
+        { type: 'talk', text: "…………" },
+        { type: 'talk', text: "哦！我忘了！你还需要一个操作台！" },
+        { type: 'talk', text: "稍等……" },
+        { type: 'talk', text: "……" },
+        { type: 'talk', text: "…………" },
+        { type: 'talk', text: "成功了！" },
+        { type: 'talk', text: "我已经将你的键盘绑定到设备上，只需要借助键盘就可以将精神力上传到系统里了！" },
+        { type: 'talk', text: "让我们看一下怎么用吧！" },
+        
+        // 1. 随机单键
+        { type: 'talk', text: "首先是最简单的【方向键】。音符会随机出现在上下左右四个轨道。" },
+        { type: 'talk', text: "你需要按照对应的方向，点击键盘上的方向键。" },
+        { type: 'talk', text: "注意：尽可能和【判定线】重合才能效果最大化啊！" },
+        { type: 'action', actionType: 'tap_random', target: 5, text: "任务：消除随机出现的单键" },
+        { type: 'talk', text: "反应不错。注意，不同方向的颜色是固定的。" },
+        
+        // 2. 随机长按
+        { type: 'talk', text: "接下来是【长按音符】，与方向键类似，你需要按住对应的方向键，直到结束时松开。" },
+        { type: 'talk', text: "1. 按住不放直到长条结束。\n2. 松开太早或太晚都不行" },
+        { type: 'action', actionType: 'hold_random', target: 5, text: "任务：完美完成随机方向的长按" },
+        { type: 'talk', text: "不愧是你！" },
+
+        // 3. 空格键
+        { type: 'talk', text: "不好！我们检测到入侵了！看到中间的紫色环形了吗？" },
+        { type: 'talk', text: "当它发出环形波的时候，你需要在它到达【判定线】的时候用空格键抵御入侵。" },
+        { type: 'talk', text: "让我们试一下吧！" },
+        { type: 'action', actionType: 'tap_space', target: 3, text: "任务：按下 Space 键" },
+        { type: 'talk', text: "也有可能会有持续的波段攻击，长按空格键抵御吧！" },
+        { type: 'action', actionType: 'hold_space', target: 3, text: "任务：长按 Space 键" },
+
+        // 4. 随机双押 (排除上下)
+        { type: 'talk', text: "敌人更强大了！我们需要更快收集精神力信号才能和设备同步！" },
+        { type: 'talk', text: "【双押】意味着两个音符同时到达，它们会有【金色边框】。" },
+        { type: 'talk', text: "同时按下它们吧！" },
+        { type: 'action', actionType: 'sync_random', target: 5, text: "任务：同时按下两个方向键" },
+        { type: 'talk', text: "很好！协调性很重要！" },
+
+        // 5. 混合双押
+        { type: 'talk', text: "可恶！在同步过程中遭到入侵了！" },
+        { type: 'talk', text: "我们需要同时按下空格和方向键！" },
+        { type: 'action', actionType: 'sync_mix', target: 5, text: "任务：同时按下 方向键 + Space" },
+        
+        // 6. 最终考核
+        { type: 'talk', text: "太棒了！下面是最后一步！" },
+        { type: 'talk', text: "你需要和设备进一步同步。" },
+        { type: 'talk', text: "所有类型的音符将随机出现。你需要连续无失误完成 20 个信号的校准。" },
+        { type: 'action', actionType: 'final_exam', target: 20, text: "最终考核：综合随机测试" },
+
+        // 结束
+        { type: 'talk', text: "……" },
+        { type: 'talk', text: "校准全部完成！你的同步率已达到 100%。" },
+        { type: 'talk', text: "在实际使用的过程中，较强的波段可能会导致画面发生变化，请不要担心！" },
+        { type: 'talk', text: "下面去挑战真正的敌人吧！祝你好运！" },
+        { type: 'end' }
+    ];
+
+    // --- 初始化 ---
+    function resize() {
+        width = window.innerWidth; height = window.innerHeight;
+        canvas.width = width; canvas.height = height;
+        centerX = width/2; centerY = height/2;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- 核心循环 ---
+    function loop() {
+        ctx.fillStyle = '#000'; ctx.fillRect(0,0,width,height);
+        
+        drawLanes();
+        updateAndDrawNotes();
+        updateParticles();
+
+        // 自动生成逻辑
+        if (waitingForAction && notes.length === 0) {
+            const now = Date.now();
+            
+            // 失败重试逻辑
+            if (waveMissed) {
+                if (now - lastSpawnTime > 1500) { 
+                    spawnTutorialNote(); // 重新生成当前类型
+                    lastSpawnTime = now;
+                }
+            } else {
+                // 成功逻辑
+                if (now - lastSpawnTime > 1200) {
+                    if (practiceCount < currentTargetCount) {
+                        spawnTutorialNote(); // 生成下一个
+                        lastSpawnTime = now;
+                    } else {
+                        // 本阶段完成
+                        if (now - lastSpawnTime > 1500) {
+                            waitingForAction = false;
+                            advanceStep();
+                        }
+                    }
+                }
+            }
+        }
+
+        requestAnimationFrame(loop);
+    }
+
+    // --- 逻辑控制 ---
+    function advanceStep() {
+        if (waitingForAction) return;
+        
+        stepIndex++;
+        if (stepIndex >= SCRIPT.length) return;
+
+        const step = SCRIPT[stepIndex];
+        
+        if (step.type === 'talk') {
+            document.getElementById('dialogue-text').innerText = step.text;
+            document.getElementById('task-overlay').style.display = 'none';
+            document.getElementById('continue-tip').style.visibility = 'visible';
+        } 
+        else if (step.type === 'action') {
+            waitingForAction = true;
+            practiceCount = 0; 
+            currentTargetCount = step.target || 5;
+            waveMissed = false;
+            
+            updateTaskText(step.text);
+            document.getElementById('dialogue-text').innerText = "请按照屏幕下方的提示进行操作..."; 
+            document.getElementById('task-overlay').style.display = 'block';
+            document.getElementById('continue-tip').style.visibility = 'hidden'; 
+            notes = []; 
+            spawnTutorialNote(); 
+            lastSpawnTime = Date.now(); 
+        }
+        else if (step.type === 'end') {
+            exitTutorial();
+        }
+    }
+
+    function updateTaskText(baseText) {
+        const el = document.getElementById('task-overlay');
+        el.innerText = `${baseText} [进度: ${practiceCount} / ${currentTargetCount}]`;
+        if(practiceCount > 0) el.style.color = "#00ffaa"; 
+        else el.style.color = "#ffcc00";
+    }
+
+    // --- 核心：随机音符生成器 ---
+    function spawnTutorialNote() {
+        const step = SCRIPT[stepIndex];
+        waveMissed = false; 
+        
+        // 飞行时间
+        const travelTime = 1.5; 
+        const now = Date.now() / 1000;
+        const hitTime = now + travelTime;
+
+        let type = step.actionType;
+
+        // 如果是最终考核，随机决定类型
+        if (type === 'final_exam') {
+            const rand = Math.random();
+            if (rand < 0.3) type = 'tap_random';
+            else if (rand < 0.5) type = 'hold_random';
+            else if (rand < 0.6) type = 'tap_space';
+            else if (rand < 0.7) type = 'hold_space';
+            else if (rand < 0.85) type = 'sync_random';
+            else type = 'sync_mix';
+        }
+
+        // 根据类型生成 note
+        if (type === 'tap_random') {
+            const lane = Math.floor(Math.random() * 4); // 0-3
+            addNote(hitTime, lane, 0, false);
+        }
+        else if (type === 'hold_random') {
+            const lane = Math.floor(Math.random() * 4);
+            addNote(hitTime, lane, 1.5, false); // 1.5s 长按
+        }
+        else if (type === 'tap_space') {
+            addNote(hitTime, 4, 0, false);
+        }
+        else if (type === 'hold_space') {
+            addNote(hitTime, 4, 1.5, false);
+        }
+        else if (type === 'sync_random') {
+            // 随机两个方向键，排除 上(0)+下(2)
+            const pairs = [[0,1], [0,3], [1,2], [1,3], [2,3]]; // 0+2 excluded
+            const p = pairs[Math.floor(Math.random() * pairs.length)];
+            addNote(hitTime, p[0], 0, true);
+            addNote(hitTime, p[1], 0, true);
+        }
+        else if (type === 'sync_mix') {
+            // 方向键 + 空格
+            const lane = Math.floor(Math.random() * 4);
+            addNote(hitTime, lane, 0, true);
+            addNote(hitTime, 4, 0, true);
+        }
+    }
+
+    function addNote(time, lane, duration, isSync) {
+        notes.push({ 
+            time: time, 
+            lane: lane, 
+            duration: duration, 
+            hit: false, 
+            processed: false, 
+            holding: false, 
+            isSync: isSync 
+        });
+    }
+
+    // --- 绘图函数 ---
+    function drawLanes() {
+        ctx.beginPath(); ctx.arc(centerX, centerY, HIT_RADIUS, 0, Math.PI*2);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+
+        [0,1,2,3].forEach(i => {
+            const ang = [-1.57, 0, 1.57, 3.14][i];
+            const x = centerX + Math.cos(ang) * HIT_RADIUS;
+            const y = centerY + Math.sin(ang) * HIT_RADIUS;
+            ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(x, y);
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 2; ctx.stroke();
+            
+            ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fill();
+            ctx.strokeStyle = LANE_COLORS[i]; ctx.lineWidth = 3; ctx.stroke();
+        });
+        
+        ctx.beginPath(); ctx.arc(centerX, centerY, 35, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(214,0,255,0.4)'; ctx.lineWidth = 2; ctx.stroke();
+    }
+
+    function updateAndDrawNotes() {
+        const now = Date.now() / 1000;
+        const travelTime = 1.5;
+
+        // 判定 Miss 逻辑
+        for(let i = notes.length - 1; i >= 0; i--) {
+            let n = notes[i];
+            
+            // 1. 头判 Miss (未按超时)
+            if (!n.holding && !n.processed && now > n.time + 0.2) { 
+                triggerMiss("MISS");
+                n.processed = true; 
+                notes.splice(i, 1);
+                continue;
+            }
+
+            // 2. 长按尾判 Miss (超时未松开)
+            if (n.holding && now > n.time + n.duration + 0.3) {
+                triggerMiss("TOO LATE!");
+                n.holding = false;
+                n.processed = true;
+                notes.splice(i, 1);
+                continue;
+            }
+        }
+
+        notes.forEach(n => {
+            // 【关键修复】如果音符已经被标记为 processed（例如松手太早），不要再绘制，
+            // 否则它会因为没有 holding 而继续根据时间差计算位置，导致“飞出去”
+            if (n.processed) return;
+
+            const diffHead = n.time - now;
+            
+            // 长条绘制
+            if (n.duration > 0) {
+                const diffTail = (n.time + n.duration) - now;
+                let rHead = (1 - diffHead / travelTime) * HIT_RADIUS;
+                if (n.holding) rHead = HIT_RADIUS;
+                let rTail = (1 - diffTail / travelTime) * HIT_RADIUS;
+
+                if (rHead > 0 && rTail < HIT_RADIUS) {
+                    let ds = Math.max(0, rTail);
+                    let de = Math.min(HIT_RADIUS, rHead);
+                    if (de > ds) drawNoteBody(n.lane, de, ds);
+                    // 尾判点
+                    if (rTail > 0 && rTail <= HIT_RADIUS) drawNoteHead(n.lane, rTail, n.isSync, false);
+                }
+            }
+
+            // 音符头绘制
+            if (diffHead <= travelTime && (!n.holding || n.duration === 0)) {
+                const r = (1 - diffHead / travelTime) * HIT_RADIUS;
+                if (r > 0) drawNoteHead(n.lane, r, n.isSync, n.holding);
+            }
+        });
+    }
+
+    function drawNoteBody(lane, rHead, rTail) {
+        const ang = [-1.57,0,1.57,3.14][lane]||0;
+        if(lane===4) {
+            ctx.beginPath(); ctx.arc(centerX, centerY, rHead, 0, 6.28); 
+            ctx.arc(centerX, centerY, rTail, 0, 6.28, true); 
+            ctx.fillStyle='rgba(214,0,255,0.3)'; ctx.fill();
+        } else {
+            const x1=centerX+Math.cos(ang)*rHead, y1=centerY+Math.sin(ang)*rHead;
+            const x2=centerX+Math.cos(ang)*rTail, y2=centerY+Math.sin(ang)*rTail;
+            ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+            ctx.strokeStyle=LANE_COLORS[lane]; ctx.lineWidth=10; ctx.stroke();
+        }
+    }
+
+    function drawNoteHead(lane, r, isSync, isHolding) {
+        if (isSync) {
+            ctx.beginPath();
+            if (lane === 4) ctx.arc(centerX, centerY, r + 4, 0, 6.28);
+            else {
+                const ang = [-1.57,0,1.57,3.14][lane];
+                const x = centerX + Math.cos(ang) * r, y = centerY + Math.sin(ang) * r;
+                ctx.arc(x, y, 19, 0, 6.28); 
+            }
+            ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 3; ctx.stroke();
+        }
+
+        if(lane===4) {
+            ctx.beginPath(); ctx.arc(centerX, centerY, r, 0, 6.28);
+            ctx.strokeStyle=LANE_COLORS[4]; ctx.lineWidth=6; ctx.stroke();
+            if(isHolding) { ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fill(); }
+        } else {
+            const ang = [-1.57,0,1.57,3.14][lane];
+            const x=centerX+Math.cos(ang)*r, y=centerY+Math.sin(ang)*r;
+            ctx.beginPath(); ctx.arc(x,y,15,0,6.28);
+            ctx.fillStyle=LANE_COLORS[lane]; ctx.fill();
+            if(isHolding) { ctx.fillStyle='#fff'; ctx.fill(); }
+        }
+    }
+
+    function triggerMiss(text) {
+        if (!waveMissed) {
+            waveMissed = true;
+            createFloatText(centerX, centerY - 80, text, "#f05");
+        }
+    }
+
+    // --- 输入处理 ---
+    window.addEventListener('keydown', e => {
+        if (!waitingForAction) {
+            if (['Enter', 'Space', 'ArrowRight'].includes(e.code) || e.type === 'click') advanceStep();
+            return;
+        }
+
+        if (KEYS_MAP.hasOwnProperty(e.code)) {
+            const lane = KEYS_MAP[e.code];
+            if(e.code==='Space') e.preventDefault();
+            
+            const now = Date.now() / 1000;
+            // 判定窗口 0.3s
+            const note = notes.find(n => !n.processed && !n.headHit && n.lane === lane && Math.abs(n.time - now) < 0.3);
+            
+            if (note) {
+                note.headHit = true;
+                createExplosion(lane);
+                
+                if (note.duration > 0) {
+                    note.holding = true;
+                } else {
+                    note.processed = true;
+                    checkTaskCompletion();
+                }
+            }
+        }
+    });
+
+    window.addEventListener('keyup', e => {
+        const lane = KEYS_MAP[e.code];
+        if (lane !== undefined) {
+            const note = notes.find(n => n.holding && n.lane === lane);
+            if (note) {
+                note.holding = false;
+                note.processed = true; 
+                
+                const now = Date.now() / 1000;
+                // 【关键修复】过早松手判定：立即从数组移除，防止飞出去
+                if (now < note.time + note.duration - 0.2) {
+                    triggerMiss("TOO EARLY!");
+                    // 立即移除该音符
+                    const idx = notes.indexOf(note);
+                    if(idx > -1) notes.splice(idx, 1);
+                } else {
+                    checkTaskCompletion();
+                }
+            }
+        }
+    });
+
+    document.body.addEventListener('click', () => {
+        if (!waitingForAction) advanceStep();
+    });
+
+    function checkTaskCompletion() {
+        const allDone = notes.every(n => n.processed);
+        if (allDone && notes.length > 0) {
+            if (!waveMissed) {
+                practiceCount++;
+                const currentStep = SCRIPT[stepIndex];
+                updateTaskText(currentStep.text);
+                createFloatText(centerX, centerY + 80, `OK! ${practiceCount}/${currentTargetCount}`, "#0f0");
+            }
+            notes = []; 
+        }
+    }
+
+    function exitTutorial() {
+        window.location.href = "game.html";
+    }
+
+    // --- 粒子系统 ---
+    function createExplosion(lane) {
+        let x, y, color = LANE_COLORS[lane];
+        if(lane===4) { x=centerX; y=centerY; }
+        else {
+            const ang = [-1.57,0,1.57,3.14][lane];
+            x = centerX + Math.cos(ang)*HIT_RADIUS;
+            y = centerY + Math.sin(ang)*HIT_RADIUS;
+        }
+        for(let i=0; i<8; i++) particles.push({ x, y, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, life:1, color, type:'spark' });
+    }
+    
+    function createFloatText(x, y, text, color) {
+        particles.push({ x, y, text, color, life: 1.0, type: 'text' });
+    }
+
+    function updateParticles() {
+        for(let i=particles.length-1; i>=0; i--) {
+            let p = particles[i];
+            if (p.type === 'spark') {
+                p.x+=p.vx; p.y+=p.vy; p.life-=0.05;
+                ctx.globalAlpha=p.life; ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,4,4);
+            } 
+            else if (p.type === 'text') {
+                p.y -= 1; p.life -= 0.02;
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.fillStyle = p.color;
+                ctx.font = "bold 30px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(p.text, p.x, p.y);
+                ctx.strokeStyle = "black"; ctx.lineWidth = 1; ctx.strokeText(p.text, p.x, p.y);
+            }
+            if(p.life<=0) particles.splice(i,1);
+        }
+        ctx.globalAlpha=1;
+    }
+
+    document.getElementById('dialogue-text').innerText = SCRIPT[0].text;
+    loop();
+
+</script>
+</body>
+</html>
