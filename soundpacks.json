@@ -1,0 +1,32 @@
+[
+    {
+      "id": "BanG Dream!(1)",
+      "name": "BanG Dream!(1)",
+      "type": "file",
+      "files": [
+        "sound/sfx/BanG Dream!(1)/hit0.mp3",
+        "sound/sfx/BanG Dream!(1)/hit0.mp3",
+        "sound/sfx/BanG Dream!(1)/hit0.mp3",
+        "sound/sfx/BanG Dream!(1)/hit0.mp3",
+        "sound/sfx/BanG Dream!(1)/hit1.mp3"
+      ]
+    },
+    {
+      "id": "taiko",
+      "name": "taiko",
+      "type": "file",
+      "files": [
+        "sound/sfx/taiko/dong.ogg",
+        "sound/sfx/taiko/dong.ogg",
+        "sound/sfx/taiko/dong.ogg",
+        "sound/sfx/taiko/dong.ogg",
+        "sound/sfx/taiko/ka.ogg"
+      ]
+    },
+    {
+      "id": "synth",
+      "name": "Electronic (Synth)",
+      "type": "synth",
+      "desc": "Generated in real-time"
+    }
+  ]

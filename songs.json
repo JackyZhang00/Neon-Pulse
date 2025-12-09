@@ -1,21 +1,5 @@
 [
   {
-    "id": "demo_track",
-    "title": "Neon Drift (Demo)",
-    "artist": "System Generator",
-    "charter": "AI",
-    "tags": ["System"],
-    "cover": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600",
-    "audio": null, 
-    "preview_start": 0,
-    "charts": {
-      "easy": null,
-      "normal": null,
-      "hard": null,
-      "expert": null
-    }
-  },
-  {
     "id": "R·I·O·T",
     "title": "R·I·O·T",
     "artist": "RAISE A SUILEN",

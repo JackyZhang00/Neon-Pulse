@@ -79,7 +79,7 @@
 <div id="task-overlay">当前任务：击中音符！</div>
 
 <div id="dialogue-box">
-    <div id="speaker-name">同步助手NanaChan</div>
+    <div id="speaker-name">NanaChan（N-07）</div>
     <div id="dialogue-text">欢迎来到 Neon Pulse 连接程序...</div>
     <div id="continue-tip">按 [Enter] 或 点击屏幕 继续 ▶</div>
 </div>
@@ -110,66 +110,60 @@
 
     // --- 剧本 ---
     const SCRIPT = [
-        { type: 'talk', text: "欢迎来到Neon Pulse【离心律动】！我是你的同步助手NanaChan。" },
-        { type: 'talk', text: "我们的系统目前受到未知波段入侵，只有精神力和设备同步才能抵抗它们。" },
-        { type: 'talk', text: "听小七说，你是千里挑一的人才？太好了！" },
-        { type: 'talk', text: "让我来简单介绍一下这个系统怎么用……我相信你！" },
-        { type: 'talk', text: "为了方便使用，小七已经让我将口令转换成【音符】，你只要正确演奏它们就能最大程度抵御敌人。" },
-        { type: 'talk', text: "看到外面的白色圆圈了吗？那是【判定线】，只有当音符与判定线相交时，你的精神力信号才能最大程度与设备同步。" },
+        { type: 'talk', text: "欢迎来到Neon Pulse【离心律动】！我是你的专属导航员Nana，编号N-07～请多指教！" },
+        { type: 'talk', text: "呜…系统正在被奇怪的信号入侵！不过别担心，只要我们的精神力同步，就一定能挡住它们！" },
+        { type: 'talk', text: "小七说你的适配率超高？太好了！我就知道今天会遇到厉害的伙伴！" },
+        { type: 'talk', text: "让我来帮你快速上手系统……啊，不过就算不小心失误也没关系，我会一直陪着你的！" },
+        { type: 'talk', text: "为了方便作战，我已经把防御指令转换成【可视音符】啦～只要准确演奏，就能把入侵信号通通赶走！" },
+        { type: 'talk', text: "看到那条发光的白圈了吗？那是【同步判定线】！当音符和它重合时按下，我们的精神力就能完美共鸣！" },
         { type: 'talk', text: "……" },
-        { type: 'talk', text: "…………" },
-        { type: 'talk', text: "哦！我忘了！你还需要一个操作台！" },
-        { type: 'talk', text: "稍等……" },
-        { type: 'talk', text: "……" },
-        { type: 'talk', text: "…………" },
-        { type: 'talk', text: "成功了！" },
-        { type: 'talk', text: "我已经将你的键盘绑定到设备上，只需要借助键盘就可以将精神力上传到系统里了！" },
-        { type: 'talk', text: "让我们看一下怎么用吧！" },
+        { type: 'talk', text: "…………啊！" },
+        { type: 'talk', text: "（小声）我、我好像忘记给你开放操作权限了……稍等3秒！马上就好！" },
+        { type: 'talk', text: "（快速敲击虚拟键盘的音效）" },
+        { type: 'talk', text: "搞定～！Tehepero☆（轻轻敲自己头）" },
+        { type: 'talk', text: "我已经把你的键盘和系统绑定啦！从现在起，你的每次按键都会化作守护这里的力量哦！" },
+        { type: 'talk', text: "那么——我们先从最简单的开始吧！" },
         
         // 1. 随机单键
-        { type: 'talk', text: "首先是最简单的【方向键】。音符会随机出现在上下左右四个轨道。" },
-        { type: 'talk', text: "你需要按照对应的方向，点击键盘上的方向键。" },
-        { type: 'talk', text: "注意：尽可能和【判定线】重合才能效果最大化啊！" },
-        { type: 'action', actionType: 'tap_random', target: 5, text: "任务：消除随机出现的单键" },
-        { type: 'talk', text: "反应不错。注意，不同方向的颜色是固定的。" },
+        { type: 'talk', text: "首先是【方向音符】！它们会从四个轨道飞来，对应键盘的↑↓←→！" },
+        { type: 'talk', text: "看到音符和判定线重合的瞬间，就按下对应方向键！记住要尽可能同步哦～！" },
+        { type: 'action', actionType: 'tap_random', target: 5, text: "试试看：打中5个方向音符！" },
+        { type: 'talk', text: "好厉害！啊对了，每个方向都有专属颜色，看久了就会记住的！" },
         
         // 2. 随机长按
-        { type: 'talk', text: "接下来是【长按音符】，与方向键类似，你需要按住对应的方向键，直到结束时松开。" },
-        { type: 'talk', text: "1. 按住不放直到长条结束。\n2. 松开太早或太晚都不行" },
-        { type: 'action', actionType: 'hold_random', target: 5, text: "任务：完美完成随机方向的长按" },
-        { type: 'talk', text: "不愧是你！" },
+        { type: 'talk', text: "接下来是【长按音符】！要按住对应方向键，直到音符结束才能松开～" },
+        { type: 'talk', text: "提前松开或者按得太久都不行哦！……虽然我也会偷偷帮你调整一点点啦～" },
+        { type: 'action', actionType: 'hold_random', target: 5, text: "试试看：完美完成5个长按！" },
+        { type: 'talk', text: "哇！同步率一下子就上来了！你果然超有天赋！" },
 
         // 3. 空格键
-        { type: 'talk', text: "不好！我们检测到入侵了！看到中间的紫色环形了吗？" },
-        { type: 'talk', text: "当它发出环形波的时候，你需要在它到达【判定线】的时候用空格键抵御入侵。" },
-        { type: 'talk', text: "让我们试一下吧！" },
-        { type: 'action', actionType: 'tap_space', target: 3, text: "任务：按下 Space 键" },
-        { type: 'talk', text: "也有可能会有持续的波段攻击，长按空格键抵御吧！" },
-        { type: 'action', actionType: 'hold_space', target: 3, text: "任务：长按 Space 键" },
+        { type: 'talk', text: "警报——！检测到入侵波形！快看中间那个紫色的环！" },
+        { type: 'talk', text: "当它扩散出光圈时，在光圈碰到判定线的瞬间按下空格键，就能展开护盾！" },
+        { type: 'action', actionType: 'tap_space', target: 3, text: "紧急应对：用空格键拦截3次攻击！" },
+        { type: 'talk', text: "也有可能遇到连续攻击……这时候就要长按空格键维持护盾！" },
+        { type: 'action', actionType: 'hold_space', target: 3, text: "维持护盾：长按空格抵御持续攻击！" },
 
         // 4. 随机双押 (排除上下)
-        { type: 'talk', text: "敌人更强大了！我们需要更快收集精神力信号才能和设备同步！" },
-        { type: 'talk', text: "【双押】意味着两个音符同时到达，它们会有【金色边框】。" },
-        { type: 'talk', text: "同时按下它们吧！" },
-        { type: 'action', actionType: 'sync_random', target: 5, text: "任务：同时按下两个方向键" },
-        { type: 'talk', text: "很好！协调性很重要！" },
+        { type: 'talk', text: "敌人的信号变强了！我们需要更快的同步响应！" },
+        { type: 'talk', text: "注意那些带【金色边框】的音符！它们会成对出现，需要同时按下两个方向键！" },
+        { type: 'action', actionType: 'sync_random', target: 5, text: "双键同步：同时按下两个方向键！" },
+        { type: 'talk', text: "好耶！我们的默契越来越好了！" },
 
         // 5. 混合双押
-        { type: 'talk', text: "可恶！在同步过程中遭到入侵了！" },
-        { type: 'talk', text: "我们需要同时按下空格和方向键！" },
-        { type: 'action', actionType: 'sync_mix', target: 5, text: "任务：同时按下 方向键 + Space" },
+        { type: 'talk', text: "呜哇——入侵信号和音符一起出现了！" },
+        { type: 'talk', text: "这种情况要同时按方向键和空格键！左手空格右手方向，就像这样——！" },
+        { type: 'action', actionType: 'sync_mix', target: 5, text: "攻防一体：方向键+空格同时按下！" },
         
         // 6. 最终考核
-        { type: 'talk', text: "太棒了！下面是最后一步！" },
-        { type: 'talk', text: "你需要和设备进一步同步。" },
-        { type: 'talk', text: "所有类型的音符将随机出现。你需要连续无失误完成 20 个信号的校准。" },
-        { type: 'action', actionType: 'final_exam', target: 20, text: "最终考核：综合随机测试" },
+        { type: 'talk', text: "太棒了！最后一步——让我们把同步率推到最高！" },
+        { type: 'talk', text: "接下来所有类型的音符会混合出现，但只要相信直觉，你一定可以的！" },
+        { type: 'action', actionType: 'final_exam', target: 20, text: "终极同步测试：连续完成20个信号！" },
 
         // 结束
-        { type: 'talk', text: "……" },
-        { type: 'talk', text: "校准全部完成！你的同步率已达到 100%。" },
-        { type: 'talk', text: "在实际使用的过程中，较强的波段可能会导致画面发生变化，请不要担心！" },
-        { type: 'talk', text: "下面去挑战真正的敌人吧！祝你好运！" },
+        { type: 'talk', text: "…………" },
+        { type: 'talk', text: "同步率100%！完美！！我就知道你可以的！" },
+        { type: 'talk', text: "对了对了，实战中如果遇到高强度信号，画面可能会有点晃动……别担心，那只是系统在全力共鸣！" },
+        { type: 'talk', text: "那么——让我们一起把那些入侵信号，变成最绚丽的节奏烟花吧！" },
         { type: 'end' }
     ];
 
