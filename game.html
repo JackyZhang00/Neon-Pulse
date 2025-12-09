@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Neon Pulse - Final Pro</title>
+    <title>Neon Pulse - Miss Logic Fixed</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; color: white; font-family: 'Segoe UI', sans-serif; user-select: none; }
         
@@ -10,7 +10,7 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center;
             opacity: 0.3; filter: blur(8px) brightness(0.5); z-index: 0;
-            transition: all 0.1s ease; /* 加快过渡以支持闪烁 */
+            transition: all 0.1s ease;
         }
 
         canvas { display: block; position: relative; z-index: 1; }
@@ -30,11 +30,113 @@
             align-items: center; justify-content: center;
         }
 
+        #loading-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 50; background: rgba(0,0,0,0.9);
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .loading-spinner {
+            width: 50px; height: 50px; border: 5px solid #333; border-top: 5px solid #0ff;
+            border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         #hud { position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 5; display: none; }
         #score-display { position: absolute; top: 20px; left: 20px; font-size: 40px; font-weight: 900; }
-        #combo-display { position: absolute; top: 70px; left: 20px; font-size: 30px; color: #ffcc00; font-weight: bold; opacity: 0; transition: transform 0.1s; }
+        
+        #auto-indicator {
+            position: absolute; top: 65px; left: 24px; 
+            font-size: 14px; color: #00ccff; font-weight: bold; letter-spacing: 2px;
+            border: 1px solid #00ccff; padding: 2px 6px; border-radius: 4px;
+            display: none; box-shadow: 0 0 10px rgba(0,204,255,0.3);
+        }
+
+        #combo-display { position: absolute; top: 90px; left: 20px; font-size: 30px; color: #ffcc00; font-weight: bold; opacity: 0; transition: transform 0.1s; }
         #song-info-hud { position: absolute; top: 20px; right: 20px; text-align: right; }
         
+        /* --- 分数条样式 --- */
+        #score-bar-container {
+            position: absolute; right: 30px; top: 100px; bottom: 50px; width: 15px;
+            background: rgba(20, 20, 20, 0.6); border: 1px solid #444; border-radius: 8px;
+            overflow: visible;
+        }
+        #score-bar-fill {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
+            background: linear-gradient(to top, #00ccff, #00ffaa);
+            border-radius: 8px;
+            transition: height 0.1s linear, background 0.3s;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        
+        @keyframes rainbow-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes bar-pulse {
+            0% { box-shadow: 0 0 15px #ff0055, 0 0 30px rgba(255, 0, 85, 0.5); }
+            50% { box-shadow: 0 0 25px #ff0055, 0 0 50px rgba(255, 200, 0, 0.8); }
+            100% { box-shadow: 0 0 15px #ff0055, 0 0 30px rgba(255, 0, 85, 0.5); }
+        }
+
+        .score-bar-cleared {
+            background: linear-gradient(0deg, #ff0055, #ffcc00, #00ffaa, #00ccff, #d600ff, #ff0055) !important;
+            background-size: 100% 400% !important;
+            animation: rainbow-flow 3s linear infinite, bar-pulse 1s ease-in-out infinite !important;
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+
+        #score-bar-marker {
+            position: absolute; left: -5px; width: 25px; height: 2px;
+            background: #aaa; z-index: 10;
+            box-shadow: 0 0 5px #fff;
+            transition: background 0.3s;
+        }
+        #score-bar-marker.marker-passed {
+            background: #fff; box-shadow: 0 0 10px #ff0055;
+        }
+        #score-bar-marker::after {
+            content: "CLEAR"; position: absolute; right: 30px; top: -10px;
+            font-size: 10px; color: #aaa; font-weight: bold; font-family: monospace;
+            transition: color 0.3s;
+        }
+        #score-bar-marker.marker-passed::after { color: #fff; text-shadow: 0 0 5px #ff0055; }
+        
+        /* --- 结算印章样式 --- */
+        .stamp-normal {
+            font-size: 30px; font-weight: bold; 
+            border: 3px solid currentColor; display: inline-block; padding: 5px 15px; 
+            transform: rotate(-10deg);
+        }
+        .stamp-critical {
+            font-size: 50px; font-weight: 900; font-family: 'Segoe UI', sans-serif;
+            padding: 10px 40px; border: 5px solid rgba(255,255,255,0.8); border-radius: 12px;
+            text-transform: uppercase; display: inline-block;
+            background: linear-gradient(to right, #ff0000, #ff8800, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+            background-size: 200% auto;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: stamp-shine 2s linear infinite, stamp-pulse 0.8s ease-in-out infinite alternate, stamp-rotate-wobble 3s ease-in-out infinite;
+        }
+        .stamp-auto {
+            font-size: 40px; font-weight: bold; 
+            border: 4px solid #00ccff; color: #00ccff;
+            display: inline-block; padding: 10px 30px; 
+            transform: rotate(-5deg); letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0,204,255,0.5);
+            box-shadow: 0 0 15px rgba(0,204,255,0.3), inset 0 0 15px rgba(0,204,255,0.3);
+        }
+
+        @keyframes stamp-shine { to { background-position: 200% center; } }
+        @keyframes stamp-pulse {
+            from { box-shadow: 0 0 20px rgba(255,0,0,0.5), inset 0 0 10px rgba(255,0,0,0.5); border-color: #ff0055; transform: rotate(-10deg) scale(1); }
+            to { box-shadow: 0 0 50px rgba(0,255,255,0.8), inset 0 0 30px rgba(0,255,255,0.5); border-color: #00ccff; transform: rotate(-10deg) scale(1.1); }
+        }
+        @keyframes stamp-rotate-wobble {
+            0%, 100% { transform: rotate(-10deg) scale(1); }
+            50% { transform: rotate(-12deg) scale(1.05); }
+        }
+
+        /* --- 其他UI --- */
         #song-select-screen { display: flex; flex-direction: column; padding: 30px; box-sizing: border-box; }
         #category-bar { height: 50px; display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .tag-btn { padding: 5px 15px; border-radius: 20px; border: 1px solid #666; background: transparent; color: #aaa; cursor: pointer; white-space: nowrap; }
@@ -48,11 +150,24 @@
         .cover-art { width: 300px; height: 300px; object-fit: cover; border-radius: 8px; border: 2px solid #555; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         
         .diff-selector { display: flex; gap: 10px; margin: 20px 0; }
-        .diff-btn { padding: 8px 20px; border: 1px solid #666; background: transparent; color: #888; cursor: pointer; border-radius: 20px; font-weight: bold; }
-        .diff-btn.active { background: #0ff; color: #000; border-color: #0ff; box-shadow: 0 0 15px #0ff; }
-        .diff-btn.disabled { opacity: 0.3; cursor: not-allowed; }
+        .diff-btn { padding: 8px 20px; border: 1px solid #666; background: transparent; color: #888; cursor: pointer; border-radius: 20px; font-weight: bold; transition: all 0.2s; }
+        .diff-btn.disabled { opacity: 0.2; cursor: not-allowed; border-color: #333; background: #111; color: #444; pointer-events: none; }
+        
+        .diff-btn[data-diff="easy"].active { background: #00ccff; border-color: #00ccff; box-shadow: 0 0 15px #00ccff; color: #000; }
+        .diff-btn[data-diff="normal"].active { background: #00ff00; border-color: #00ff00; box-shadow: 0 0 15px #00ff00; color: #000; }
+        .diff-btn[data-diff="hard"].active { background: #ffcc00; border-color: #ffcc00; box-shadow: 0 0 15px #ffcc00; color: #000; }
+        .diff-btn[data-diff="expert"].active { background: #ff0000; border-color: #ff0000; box-shadow: 0 0 15px #ff0000; color: #fff; }
 
-        .main-btn { padding: 15px 50px; font-size: 20px; background: #fff; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .settings-area {
+            background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; border: 1px solid #444;
+            margin-top: 10px; width: 100%; max-width: 400px;
+        }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; color: #ccc; }
+        .setting-row input[type="range"] { flex: 1; margin: 0 10px; }
+        .setting-row select, .setting-row input[type="number"] { background: #222; border: 1px solid #555; color: white; padding: 2px 5px; border-radius: 4px; }
+        .setting-row input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-color: #0ff; }
+
+        .main-btn { padding: 15px 50px; font-size: 20px; background: #fff; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-top: 15px; }
         .main-btn:hover { background: #0ff; transform: scale(1.05); }
 
         #result-card { background: #222; padding: 40px; border-radius: 12px; border: 1px solid #444; text-align: center; min-width: 500px; position: relative; }
@@ -67,6 +182,32 @@
         .stat-row { display: flex; justify-content: space-between; }
         .stat-label { color: #aaa; }
         .stat-val { font-weight: bold; }
+        
+        #update-box {
+            background: #1a1a1a; padding: 40px; border-radius: 12px; border: 1px solid #0ff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.15); max-width: 600px; width: 85%; color: #eee;
+        }
+        .update-header { text-align: center; font-size: 24px; font-weight: 900; color: #0ff; margin-bottom: 20px; }
+        .update-content { margin-bottom: 30px; font-size: 16px; max-height: 300px; overflow-y: auto; }
+        .update-tag { display: inline-block; background: rgba(0, 255, 255, 0.2); color: #0ff; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 8px; font-weight: bold; }
+        .update-list-item { margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+
+        #calibration-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #111; z-index: 60; flex-direction: column; align-items: center; justify-content: center; user-select: none;
+        }
+        .calib-visual-beat {
+            width: 100px; height: 100px; background: #333; border-radius: 50%;
+            box-shadow: 0 0 0px #333; transition: transform 0.1s, background 0.1s, box-shadow 0.1s;
+            margin-bottom: 40px; display: flex; align-items: center; justify-content: center;
+            font-size: 30px; font-weight: bold; color: rgba(255,255,255,0.2);
+        }
+        .calib-visual-beat.beat-active { transform: scale(1.2); background: #fff; box-shadow: 0 0 30px #fff; }
+        .calib-visual-beat.tap-feedback { border: 2px solid #0ff; background: transparent; color: #0ff; }
+        .calib-progress { width: 300px; height: 4px; background: #333; margin: 20px 0; border-radius: 2px; }
+        .calib-progress-bar { height: 100%; background: #0ff; width: 0%; transition: width 0.2s; box-shadow: 0 0 10px #0ff; }
+        .calib-instruction { color: #888; margin-bottom: 20px; text-align: center; line-height: 1.6; }
+        .calib-result-text { font-size: 24px; color: #0ff; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -76,13 +217,42 @@
 
 <div id="countdown-overlay" style="display:none;">5</div>
 
+<div id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div style="font-size: 20px; letter-spacing: 2px; font-weight: bold;">LOADING DATA...</div>
+    <div id="loading-text" style="margin-top:10px; color:#888; font-size:14px;">Please wait</div>
+</div>
+
+<div id="calibration-overlay">
+    <h2 style="color:#fff; letter-spacing:4px; margin-bottom:10px;">AUDIO SYNC</h2>
+    <div class="calib-instruction" id="calib-step-1">
+        请跟随节奏，在听到 <strong>重音</strong> 时按下空格或点击屏幕。<br>
+        共需敲击 8 次，系统将自动计算延迟。
+    </div>
+    <div id="calib-beat-circle" class="calib-visual-beat">♪</div>
+    <div class="calib-progress"><div id="calib-progress-bar" class="calib-progress-bar"></div></div>
+    <div id="calib-status" style="color:#aaa; font-family:monospace;">Waiting...</div>
+    <div id="calib-result" class="calib-result-text" style="display:none;">0 ms</div>
+    <div style="margin-top:40px; display:flex; gap:20px;">
+        <button class="main-btn" onclick="stopCalibration()" style="padding:10px 30px; font-size:16px; background:#333; color:#aaa;">CANCEL</button>
+        <button id="calib-apply-btn" class="main-btn" onclick="applyCalibration()" style="padding:10px 30px; font-size:16px; display:none;">APPLY & SAVE</button>
+    </div>
+</div>
+
 <div id="hud">
     <div id="score-display">0000000</div>
+    <div id="auto-indicator">[ AUTOMATION ACTIVE ]</div>
     <div id="combo-display">COMBO 0</div>
     <div id="song-info-hud">
         <div id="hud-title" style="font-weight:bold; font-size:20px;">Title</div>
         <div id="hud-detail" style="color:#aaa;">Artist</div>
     </div>
+    
+    <div id="score-bar-container">
+        <div id="score-bar-fill"></div>
+        <div id="score-bar-marker"></div>
+    </div>
+
     <button onclick="pauseGame()" style="pointer-events:auto; position:absolute; top:20px; left:50%; transform:translateX(-50%); background:transparent; border:1px solid #fff; color:#fff; padding:5px 15px; cursor:pointer;">PAUSE (ESC)</button>
 </div>
 
@@ -90,6 +260,19 @@
     <h1 style="color:#fff;">PAUSED</h1>
     <button class="main-btn" onclick="startResumeCountdown()">RESUME</button>
     <button class="main-btn" onclick="backToMenu()" style="margin-top:20px; background:#f05; color:white;">EXIT</button>
+</div>
+
+<div id="update-modal" class="overlay" style="display:none; z-index: 100;">
+    <div id="update-box">
+        <div class="update-header">System Update // V.1.1.0_alpha</div>
+        <div class="update-content">
+            <div class="update-list-item"><span class="update-tag">FIX</span><strong>修复</strong><br><span style="color:#aaa;">快速切换选择曲目导致多首歌曲同时播放的bug</span></div>
+            <div class="update-list-item"><span class="update-tag">FIX</span><strong>修复</strong><br><span style="color:#aaa;">部分谱面未完成谱面选择出现错误的bug</span></div>
+            <div class="update-list-item"><span class="update-tag">NEW</span><strong>新增</strong><br><span style="color:#aaa;">自动演示模式，可以用于观看谱面</span></div>
+            <div class="update-list-item"><span class="update-tag">NEW</span><strong>新增</strong><br><span style="color:#aaa;">部分歌曲谱面，并修改部分谱面难度</span></div>
+        </div>
+        <div style="text-align: center;"><button class="main-btn" onclick="closeUpdateModal()">CONFIRM</button></div>
+    </div>
 </div>
 
 <div id="song-select-screen" class="overlay">
@@ -102,7 +285,6 @@
             <p id="preview-artist" style="color:#0ff; margin:0;">-</p>
             <p id="preview-charter" style="color:#666; font-size:12px; margin-top:5px;">-</p>
             
-            <!-- 【新增】教程按钮 -->
             <button onclick="window.location.href='tutorial.html'" style="margin: 10px 0; background: transparent; border: 1px solid #0ff; color: #0ff; padding: 5px 20px; border-radius: 20px; cursor: pointer;">
                 📖 进入新手教学 (TUTORIAL)
             </button>
@@ -113,11 +295,43 @@
                 <button class="diff-btn" data-diff="hard">HARD</button>
                 <button class="diff-btn" data-diff="expert">EXPERT</button>
             </div>
-            <button id="btn-start" class="main-btn">START GAME</button>
-            <div style="margin-top:20px; color:#aaa; font-size:12px;">
-                Speed: <span id="speed-val">2.0</span> 
-                <input type="range" id="speed-input" min="1" max="6" step="0.1" value="2.0" style="vertical-align:middle;">
+
+            <div class="settings-area">
+                <div class="setting-row">
+                    <span>Note Speed</span>
+                    <input type="range" id="speed-input" min="1" max="8" step="0.1" value="2.0">
+                    <span id="speed-val" style="width:30px; text-align:right;">2.0</span>
+                </div>
+                <div class="setting-row">
+                    <span>Input Mode</span>
+                    <select id="input-mode-select">
+                        <option value="arrow">Arrow Keys (↑→↓←)</option>
+                        <option value="wasd">WASD (W D S A)</option>
+                    </select>
+                </div>
+
+                <div class="setting-row" style="border-top: 1px solid #555; padding-top: 8px; margin-top: 8px;">
+                    <span style="color:#0ff; font-weight:bold;">Auto Play (Watch)</span>
+                    <input type="checkbox" id="auto-mode-check">
+                </div>
+
+                <div class="setting-row" style="display:none;">
+                    <span style="color:#666; font-weight:bold;">Developer Mode (Debug)</span>
+                    <input type="checkbox" id="dev-mode-check">
+                </div>
+                
+                <div class="setting-row">
+                    <span>Audio Offset (ms)</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input type="number" id="offset-input" value="0" style="width:60px;">
+                        <button onclick="startCalibration()" style="background:#222; border:1px solid #0ff; color:#0ff; cursor:pointer; border-radius:4px; padding:2px 8px; font-size:12px;">
+                            ♪ CALIBRATE
+                        </button>
+                    </div>
+                </div>
             </div>
+
+            <button id="btn-start" class="main-btn">START GAME</button>
         </div>
     </div>
 </div>
@@ -136,7 +350,7 @@
             <div style="height:1px; background:#444; margin:5px 0;"></div>
             <div class="stat-row"><span class="stat-label">MAX COMBO</span><span class="stat-val" id="res-maxcombo">0</span></div>
         </div>
-        <div id="stamp-area" style="height:50px;"></div>
+        <div id="stamp-area" style="height:100px; display:flex; align-items:center; justify-content:center;"></div>
         <button class="main-btn" onclick="backToMenu()" style="margin-top:10px;">BACK</button>
     </div>
 </div>
@@ -151,33 +365,56 @@
     let audioCtx, bgmSource, previewSource;
     let currentSong = null;
     let songList = [], filteredList = [];
-    let currentTag = 'ALL', selectedDiff = 'normal', userSpeed = 2.0;
+    let currentTag = 'ALL', selectedDiff = 'normal';
     
+    let previewRequestId = 0;
+
+    // 通关分数线配置
+    const CLEAR_THRESHOLDS = {
+        'easy': 600000,
+        'normal': 600000,
+        'hard': 700000,
+        'expert': 800000
+    };
+
+    // 配置变量
+    let userSettings = {
+        speed: 2.0,
+        inputMode: 'arrow', 
+        offset: 0,
+        devMode: false,
+        autoMode: false 
+    };
+
     // 游戏状态
     let isPlaying = false, isPaused = false, isCountingDown = false;
     let notes = [], events = [], particles = [];
     let startTime = 0;
     let audioBuffer = null;
-    let stats = { score:0, rawScore:0, maxCombo:0, combo:0, miss:0, good:0, perfect:0, critical:0 };
+    let stats = { score:0, rawScore:0, maxCombo:0, combo:0, miss:0, good:0, perfect:0, critical:0, auto:0 };
     let totalScoreUnit = 0; 
     let animationFrameId;
-    
-    // [新] 震动相关状态
     let shakeIntensity = 0; 
-    let bgFlash = 0; // 背景闪烁强度
+    let bgFlash = 0;
 
     const LANE_COLORS = ['#ff0055', '#00ffaa', '#00ccff', '#ffcc00', '#d600ff'];
-    const KEYS_MAP = { 'ArrowUp': 0, 'ArrowRight': 1, 'ArrowDown': 2, 'ArrowLeft': 3, 'Space': 4 };
+    const KEYS_MAP_ARROW = { 'ArrowUp': 0, 'ArrowRight': 1, 'ArrowDown': 2, 'ArrowLeft': 3, 'Space': 4 };
+    const KEYS_MAP_WASD  = { 'KeyW': 0, 'KeyD': 1, 'KeyS': 2, 'KeyA': 3, 'Space': 4 };
     const HIT_RADIUS = 260;
+    
+    // 判定区间
     const JUDGE_CRITICAL = 0.04;
     const JUDGE_PERFECT = 0.08;
     const JUDGE_GOOD = 0.2;
+    const JUDGE_TRAP = 0.35; 
 
     // --- 初始化 ---
     function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
     window.addEventListener('resize', resize); resize();
 
     async function init() {
+        loadSettings();
+
         try {
             const res = await fetch('songs.json');
             songList = await res.json();
@@ -197,11 +434,59 @@
             };
         });
         
-        document.getElementById('speed-input').addEventListener('input', e => {
-            userSpeed = e.target.value;
-            document.getElementById('speed-val').innerText = parseFloat(userSpeed).toFixed(1);
+        const speedInput = document.getElementById('speed-input');
+        speedInput.value = userSettings.speed;
+        document.getElementById('speed-val').innerText = parseFloat(userSettings.speed).toFixed(1);
+        speedInput.addEventListener('input', e => {
+            userSettings.speed = parseFloat(e.target.value);
+            document.getElementById('speed-val').innerText = userSettings.speed.toFixed(1);
+            saveSettings();
         });
+
+        const modeSelect = document.getElementById('input-mode-select');
+        modeSelect.value = userSettings.inputMode;
+        modeSelect.addEventListener('change', e => {
+            userSettings.inputMode = e.target.value;
+            saveSettings();
+        });
+
+        const offsetInput = document.getElementById('offset-input');
+        offsetInput.value = userSettings.offset;
+        offsetInput.addEventListener('change', e => {
+            userSettings.offset = parseInt(e.target.value) || 0;
+            saveSettings();
+        });
+
+        const devCheck = document.getElementById('dev-mode-check');
+        devCheck.checked = userSettings.devMode || false;
+        devCheck.addEventListener('change', e => {
+            userSettings.devMode = e.target.checked;
+            saveSettings();
+        });
+
+        const autoCheck = document.getElementById('auto-mode-check');
+        autoCheck.checked = userSettings.autoMode || false;
+        autoCheck.addEventListener('change', e => {
+            userSettings.autoMode = e.target.checked;
+            saveSettings();
+        });
+
         document.getElementById('btn-start').onclick = startGame;
+        checkUpdatePopup();
+    }
+
+    function saveSettings() {
+        localStorage.setItem('neon_settings_v3', JSON.stringify(userSettings));
+    }
+
+    function loadSettings() {
+        const saved = localStorage.getItem('neon_settings_v3');
+        if(saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                userSettings = { ...userSettings, ...parsed };
+            } catch(e) { console.error("Settings load error", e); }
+        }
     }
 
     // --- UI 逻辑 ---
@@ -249,6 +534,8 @@
         currentSong = filteredList[idx];
         if(!currentSong) return;
 
+        previewRequestId++;
+
         document.getElementById('preview-title').innerText = currentSong.title;
         document.getElementById('preview-artist').innerText = currentSong.artist;
         document.getElementById('preview-charter').innerText = "Charter: " + (currentSong.charter||"?");
@@ -256,25 +543,37 @@
         document.getElementById('bg-layer').style.backgroundImage = `url('${currentSong.cover}')`;
 
         const charts = currentSong.charts||{};
+        
         document.querySelectorAll('.diff-btn').forEach(btn => {
             const d = btn.dataset.diff;
-            btn.classList.toggle('disabled', charts[d]===undefined && currentSong.id!=='demo');
+            const hasChart = charts[d] || (currentSong.id === 'demo' && d==='normal');
+            
+            if (!hasChart) {
+                btn.classList.add('disabled');
+            } else {
+                btn.classList.remove('disabled');
+            }
         });
-        if(charts[selectedDiff]===undefined && currentSong.id!=='demo') {
-            const keys = Object.keys(charts);
-            if(keys.length) selectedDiff = keys[0];
+
+        if (!charts[selectedDiff] && currentSong.id!=='demo') {
+             const available = Object.keys(charts).find(k => charts[k]);
+             if (available) selectedDiff = available;
         }
+
         updateDiffUI();
-        playPreview(currentSong);
+        playPreview(currentSong, previewRequestId);
     }
 
     function updateDiffUI() {
         document.querySelectorAll('.diff-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.diff === selectedDiff);
+            btn.classList.remove('active');
+            if(btn.dataset.diff === selectedDiff) {
+                btn.classList.add('active');
+            }
         });
     }
 
-    async function playPreview(song) {
+    async function playPreview(song, reqId) {
         stopPreview();
         if(!song.audio) return;
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -282,11 +581,14 @@
 
         try {
             const buf = await fetch(song.audio).then(r=>r.arrayBuffer()).then(d=>audioCtx.decodeAudioData(d));
+            
+            if (reqId !== previewRequestId) return;
+
             previewSource = audioCtx.createBufferSource();
             previewSource.buffer = buf;
             previewSource.connect(audioCtx.destination);
             const start = song.preview_start || 10;
-            previewSource.loop = true; previewSource.loopStart = start; previewSource.loopEnd = start+15;
+            previewSource.loop = true; previewSource.loopStart = start; previewSource.loopEnd = start+30;
             previewSource.start(0, start);
         } catch(e){}
     }
@@ -298,29 +600,62 @@
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') await audioCtx.resume();
 
+        const loadingOverlay = document.getElementById('loading-overlay');
+        loadingOverlay.style.display = 'flex';
+        document.getElementById('loading-text').innerText = "Downloading & Decoding...";
         document.getElementById('song-select-screen').style.display = 'none';
-        document.getElementById('hud').style.display = 'block';
         
-        // 重置背景层透明度
-        document.getElementById('bg-layer').style.opacity = 0.5;
-        document.getElementById('bg-layer').style.filter = "blur(8px) brightness(0.5)";
-
         try {
             if (currentSong.id === 'demo') {
+                await new Promise(r => setTimeout(r, 1000));
                 const sr = audioCtx.sampleRate;
                 audioBuffer = audioCtx.createBuffer(1, sr * 30, sr);
                 notes = []; events = [{time:5, type:'shake'}, {time:10, type:'shake'}];
                 for(let i=0; i<30; i++) notes.push({time:2+i*0.8, lane:i%5, duration:i%4===0?1:0});
             } else {
                 const chartUrl = currentSong.charts[selectedDiff];
-                const [ab, cj] = await Promise.all([
-                    fetch(currentSong.audio).then(r=>r.arrayBuffer()).then(d=>audioCtx.decodeAudioData(d)),
-                    fetch(chartUrl).then(r=>r.json())
+                const [audioData, chartData] = await Promise.all([
+                    fetch(currentSong.audio).then(r => r.arrayBuffer()),
+                    fetch(chartUrl).then(r => r.json())
                 ]);
-                audioBuffer = ab;
-                notes = cj.notes||[]; events = cj.events||[];
+                document.getElementById('loading-text').innerText = "Processing Audio...";
+                audioBuffer = await audioCtx.decodeAudioData(audioData);
+                notes = chartData.notes||[]; 
+                events = chartData.events||[];
             }
-        } catch(e) { alert("Error loading: "+e); backToMenu(); return; }
+        } catch(e) { 
+            alert("Error loading data: "+e); 
+            loadingOverlay.style.display = 'none';
+            backToMenu(); 
+            return; 
+        }
+
+        loadingOverlay.style.display = 'none';
+        document.getElementById('hud').style.display = 'block';
+        document.getElementById('bg-layer').style.opacity = 0.5;
+        document.getElementById('bg-layer').style.filter = "blur(8px) brightness(0.5)";
+
+        // 初始化分数条
+        const clearScore = CLEAR_THRESHOLDS[selectedDiff] || 600000;
+        const markerPct = (clearScore / 1000000) * 100;
+        document.getElementById('score-bar-marker').style.bottom = markerPct + "%";
+        document.getElementById('score-bar-marker').classList.remove('marker-passed');
+        const barFill = document.getElementById('score-bar-fill');
+        barFill.style.height = "0%";
+        barFill.className = ''; 
+        barFill.style.background = "linear-gradient(to top, #00ccff, #00ffaa)";
+
+        const autoIndicator = document.getElementById('auto-indicator');
+        if(userSettings.autoMode) {
+            autoIndicator.style.display = 'block';
+        } else {
+            autoIndicator.style.display = 'none';
+        }
+
+        if(userSettings.devMode) {
+            const detail = document.getElementById('hud-detail');
+            detail.innerHTML += " <span style='color:#666; border:1px solid #666; padding:0 4px; border-radius:4px; font-size:12px;'>DEV MODE</span>";
+        }
 
         checkSimultaneousNotes();
         notes.forEach(n => { n.hit=false; n.processed=false; n.headHit=false; n.tailHit=false; n.holding=false; });
@@ -330,7 +665,7 @@
         notes.forEach(n => maxCombo += (n.duration>0 ? 2 : 1));
         totalScoreUnit = 1000000 / (maxCombo||1);
 
-        stats = { score:0, rawScore:0, maxCombo:0, combo:0, miss:0, good:0, perfect:0, critical:0 };
+        stats = { score:0, rawScore:0, maxCombo:0, combo:0, miss:0, good:0, perfect:0, critical:0, auto:0 };
         particles = [];
         shakeIntensity = 0; bgFlash = 0;
 
@@ -368,48 +703,71 @@
         if (!isPlaying || isPaused || isCountingDown) return;
         animationFrameId = requestAnimationFrame(gameLoop);
 
-        const now = audioCtx.currentTime - startTime;
-        if (now > audioBuffer.duration + 1.5) { finishGame(); return; }
+        const rawTime = audioCtx.currentTime - startTime;
+        const now = rawTime - (userSettings.offset / 1000);
 
-        // --- 事件处理 (震动) ---
+        if (rawTime > audioBuffer.duration + 1.5) { finishGame(); return; }
+
         events.forEach(e => {
             if(!e.triggered && now >= e.time) {
                 e.triggered = true;
-                if(e.type === 'shake') {
-                    shakeIntensity = 30; // 设定初始震动强度
-                    bgFlash = 1.0;       // 触发背景闪光
-                }
+                if(e.type === 'shake') { shakeIntensity = 30; bgFlash = 1.0; }
             }
         });
         
-        // 更新震动衰减
-        shakeIntensity *= 0.9;
-        if(shakeIntensity < 0.5) shakeIntensity = 0;
-        
-        // 更新背景闪烁衰减
-        bgFlash *= 0.9;
-        if(bgFlash < 0.01) bgFlash = 0;
-        // 动态修改背景层的滤镜亮度
+        shakeIntensity *= 0.9; if(shakeIntensity < 0.5) shakeIntensity = 0;
+        bgFlash *= 0.9; if(bgFlash < 0.01) bgFlash = 0;
         document.getElementById('bg-layer').style.filter = `blur(8px) brightness(${0.5 + bgFlash})`;
 
-        // --- 逻辑 ---
-        document.getElementById('progress-bar').style.width = ((now/audioBuffer.duration)*100) + "%";
+        document.getElementById('progress-bar').style.width = ((rawTime/audioBuffer.duration)*100) + "%";
 
+        // --- 自动演示逻辑 ---
+        if (userSettings.devMode || userSettings.autoMode) {
+            notes.forEach(n => {
+                if (!n.processed && !n.headHit && now >= n.time) {
+                    n.headHit = true;
+                    createExplosion(n.lane); 
+                    const hitType = userSettings.autoMode ? 'auto' : 'critical';
+                    if (n.duration === 0) {
+                        n.processed = true;
+                        handleHit(hitType, n.lane);
+                    } else {
+                        n.holding = true;
+                        handleHit(hitType, n.lane);
+                    }
+                }
+                if (n.holding && now >= n.time + n.duration) {
+                    n.holding = false;
+                    n.processed = true;
+                    createExplosion(n.lane);
+                    const hitType = userSettings.autoMode ? 'auto' : 'critical';
+                    handleHit(hitType, n.lane);
+                }
+            });
+        }
+
+        // --- Miss Check (超时判定) ---
         notes.forEach(n => {
             if(n.processed) return;
-            if(!n.headHit && now > n.time + JUDGE_GOOD) {
-                n.processed = true; handleHit('miss');
-            }
-            if(n.holding && now > n.time + n.duration + JUDGE_GOOD) {
-                n.holding = false; n.processed = true; handleHit('miss');
+            if(!userSettings.devMode && !userSettings.autoMode) {
+                // 1. 普通Note或长条头：时间超过 GOOD 判定区间还未击中 -> Miss
+                if(!n.headHit && now > n.time + JUDGE_GOOD) {
+                    n.processed = true; 
+                    handleHit('miss', n.lane); // 修复：传入 lane 以显示 MISS 提示
+                }
+                // 2. 长条尾：按住直到超过结束时间 + GOOD 判定区间（一直没松手）-> Miss
+                if(n.holding && now > n.time + n.duration + JUDGE_GOOD) {
+                    n.holding = false; 
+                    n.processed = true; 
+                    handleHit('miss', n.lane); // 修复：传入 lane 以显示 MISS 提示
+                }
             }
         });
 
         // --- 绘制 ---
-        ctx.save(); // 保存状态以应用震动变换
+        ctx.save(); 
         ctx.clearRect(0,0,canvas.width,canvas.height);
         
-        // 应用震动变换
         if (shakeIntensity > 0) {
             const dx = (Math.random() - 0.5) * shakeIntensity;
             const dy = (Math.random() - 0.5) * shakeIntensity;
@@ -420,42 +778,28 @@
         }
 
         const cx = canvas.width/2, cy = canvas.height/2;
-        const travel = 3.0 / userSpeed;
+        const travel = 3.0 / userSettings.speed;
 
-        // [色差效果] 如果震动强烈，绘制两次偏移的轨道以模拟色差
         if(shakeIntensity > 10) {
             ctx.globalCompositeOperation = 'lighter';
-            
-            // 红色通道偏移
-            ctx.save();
-            ctx.translate(5, 0);
-            ctx.globalAlpha = 0.5;
+            ctx.save(); ctx.translate(5, 0); ctx.globalAlpha = 0.5;
             ctx.fillStyle = '#f00'; ctx.strokeStyle = '#f00';
-            drawGameContent(cx, cy, now, travel, true); // true 表示仅绘制轮廓/关键元素
+            drawGameContent(cx, cy, now, travel, true);
             ctx.restore();
-
-            // 蓝色通道偏移
-            ctx.save();
-            ctx.translate(-5, 0);
-            ctx.globalAlpha = 0.5;
+            ctx.save(); ctx.translate(-5, 0); ctx.globalAlpha = 0.5;
             ctx.fillStyle = '#0ff'; ctx.strokeStyle = '#0ff';
             drawGameContent(cx, cy, now, travel, true);
             ctx.restore();
-            
             ctx.globalCompositeOperation = 'source-over';
         }
 
-        // 正常绘制
         drawGameContent(cx, cy, now, travel, false);
-
-        ctx.restore(); // 恢复震动变换
+        ctx.restore(); 
 
         document.getElementById('score-display').innerText = stats.score.toString().padStart(7,'0');
     }
 
-    // 封装绘制函数以便复用（用于色差效果）
     function drawGameContent(cx, cy, now, travel, isGhost) {
-        // 判定圈
         ctx.beginPath(); ctx.arc(cx,cy,HIT_RADIUS,0,6.28); 
         ctx.lineWidth=3; 
         if(!isGhost) ctx.strokeStyle='#fff'; 
@@ -463,16 +807,14 @@
         
         drawLanes(cx, cy, isGhost);
 
-        // 音符
         notes.forEach(n => {
             if(n.processed) return;
             const diffHead = n.time - now;
             
-            // 长条
             if(n.duration>0) {
                 const diffTail = (n.time+n.duration) - now;
                 let rHead = (1-diffHead/travel)*HIT_RADIUS;
-                if(n.holding) rHead = HIT_RADIUS;
+                if(n.holding) rHead = HIT_RADIUS; 
                 let rTail = (1-diffTail/travel)*HIT_RADIUS;
                 
                 if(rHead>0 && rTail<HIT_RADIUS) {
@@ -487,7 +829,6 @@
                 }
             }
 
-            // 音符头
             if(diffHead>travel || n.holding) return;
             const r = (1-diffHead/travel)*HIT_RADIUS;
             if(r>0) drawNoteHead(cx, cy, n.lane, r, n.isSync, false, isGhost);
@@ -554,7 +895,7 @@
         }
     }
 
-    // --- 输入 ---
+    // --- 输入处理 ---
     window.addEventListener('keydown', e => {
         if(e.code === 'Escape') {
             if(isPlaying) {
@@ -562,38 +903,68 @@
             }
             return;
         }
+        if (userSettings.devMode || userSettings.autoMode) return;
         if (!isPlaying || isPaused || isCountingDown || e.repeat) return;
-        const lane = KEYS_MAP[e.code];
+        
+        const map = userSettings.inputMode === 'wasd' ? KEYS_MAP_WASD : KEYS_MAP_ARROW;
+        const lane = map[e.code];
+
         if (lane !== undefined) {
             if(e.code==='Space') e.preventDefault();
-            const now = audioCtx.currentTime - startTime;
-            const note = notes.find(n => !n.processed && !n.headHit && n.lane===lane && Math.abs(n.time-now)<0.2);
+            
+            const rawTime = audioCtx.currentTime - startTime;
+            const now = rawTime - (userSettings.offset / 1000);
+            
+            const note = notes.find(n => !n.processed && !n.headHit && n.lane===lane && Math.abs(n.time-now) < JUDGE_TRAP);
+            
             if(note) {
-                const diff = Math.abs(note.time - now);
-                note.headHit = true;
-                let type = 'good';
-                if(diff < JUDGE_CRITICAL) type = 'critical'; else if(diff < JUDGE_PERFECT) type = 'perfect';
-                if(note.duration>0) { note.holding = true; handleHit(type, lane); }
-                else { note.processed = true; handleHit(type, lane); }
-                createExplosion(lane);
+                const diff = note.time - now;
+                const absDiff = Math.abs(diff);
+
+                if (absDiff < JUDGE_GOOD) {
+                    note.headHit = true;
+                    let type = 'good';
+                    if(absDiff < JUDGE_CRITICAL) type = 'critical'; 
+                    else if(absDiff < JUDGE_PERFECT) type = 'perfect';
+                    
+                    if(note.duration>0) { note.holding = true; handleHit(type, lane); }
+                    else { note.processed = true; handleHit(type, lane); }
+                    createExplosion(lane);
+                } else {
+                    note.processed = true;
+                    handleHit('miss', lane);
+                }
             }
         }
     });
 
     window.addEventListener('keyup', e => {
+        if (userSettings.devMode || userSettings.autoMode) return; 
         if (!isPlaying || isPaused || isCountingDown) return;
-        const lane = KEYS_MAP[e.code];
+        
+        const map = userSettings.inputMode === 'wasd' ? KEYS_MAP_WASD : KEYS_MAP_ARROW;
+        const lane = map[e.code];
+
         if(lane!==undefined) {
-            const now = audioCtx.currentTime - startTime;
+            const rawTime = audioCtx.currentTime - startTime;
+            const now = rawTime - (userSettings.offset / 1000);
+
             const note = notes.find(n => n.holding && n.lane===lane);
             if(note) {
                 note.holding = false; note.processed = true;
                 const endTime = note.time + note.duration;
-                const diff = Math.abs(endTime - now);
-                if(diff < JUDGE_CRITICAL) handleHit('critical', lane);
-                else if(diff < JUDGE_PERFECT) handleHit('perfect', lane);
-                else if(diff < JUDGE_GOOD) handleHit('good', lane);
-                else handleHit('miss', lane);
+                const diff = endTime - now;
+                const absDiff = Math.abs(diff);
+                
+                // 判定：如果释放时间偏差小于 JUDGE_GOOD，则根据偏差给分
+                // 如果释放时间偏差大于 JUDGE_GOOD (比如过早释放 >0.2s)，则判定为 MISS
+                if(absDiff < JUDGE_GOOD) {
+                    if(absDiff < JUDGE_CRITICAL) handleHit('critical', lane);
+                    else if(absDiff < JUDGE_PERFECT) handleHit('perfect', lane);
+                    else handleHit('good', lane);
+                } else {
+                    handleHit('miss', lane); // 过早松开显示 MISS
+                }
             }
         }
     });
@@ -606,17 +977,38 @@
             stats.combo++;
             if(stats.combo > stats.maxCombo) stats.maxCombo = stats.combo;
             let val=0;
-            if(type==='critical') { stats.critical++; val=totalScoreUnit; text="PERFECT"; isRainbow=true; }
+            
+            if (type === 'auto') {
+                stats.auto++;
+                val = totalScoreUnit;
+                text = "AUTO";
+                color = "#00ccff"; 
+            }
+            else if(type==='critical') { stats.critical++; val=totalScoreUnit; text="PERFECT"; isRainbow=true; }
             else if(type==='perfect') { stats.perfect++; val=totalScoreUnit; text="PERFECT"; }
             else { stats.good++; val=totalScoreUnit*0.5; text="GOOD"; color="#fc0"; }
+            
             stats.rawScore += val;
-            stats.score = Math.min(1000000, Math.floor(stats.rawScore));
+            stats.score = Math.min(1000000, Math.round(stats.rawScore));
         }
         
         const cEl = document.getElementById('combo-display');
         cEl.innerText = stats.combo>0 ? "COMBO "+stats.combo : "";
         cEl.style.opacity = stats.combo>0 ? 1 : 0;
         
+        // 更新分数条
+        const scorePct = (stats.score / 1000000) * 100;
+        const barFill = document.getElementById('score-bar-fill');
+        barFill.style.height = scorePct + "%";
+        
+        const clearScore = CLEAR_THRESHOLDS[selectedDiff];
+        if (stats.score >= clearScore) {
+            if (!barFill.classList.contains('score-bar-cleared')) {
+                barFill.classList.add('score-bar-cleared');
+                document.getElementById('score-bar-marker').classList.add('marker-passed');
+            }
+        }
+
         if(lane!==undefined) {
             const pos = getPosFromLane(lane);
             if(type!=='miss') createExplosion(lane); 
@@ -697,9 +1089,12 @@
         document.getElementById('result-screen').style.display='none';
         document.getElementById('countdown-overlay').style.display='none';
         document.getElementById('song-select-screen').style.display='flex';
+        document.getElementById('loading-overlay').style.display='none'; 
         document.getElementById('bg-layer').style.opacity = 0.5;
         document.getElementById('bg-layer').style.filter = "blur(8px) brightness(0.5)";
-        playPreview(currentSong);
+        
+        previewRequestId++;
+        playPreview(currentSong, previewRequestId);
     };
 
     function finishGame() {
@@ -707,23 +1102,58 @@
         cancelAnimationFrame(animationFrameId);
         document.getElementById('hud').style.display='none';
         document.getElementById('result-screen').style.display='flex';
-        document.getElementById('res-score').innerText = stats.score;
-        document.getElementById('res-crit').innerText = stats.critical;
+        
+        const scoreEl = document.getElementById('res-score');
+        if (userSettings.autoMode) {
+            scoreEl.innerText = "AUTO";
+            scoreEl.style.color = "#00ccff";
+        } else {
+            scoreEl.innerText = stats.score;
+            scoreEl.style.color = "#fff";
+        }
+
+        if (userSettings.autoMode) {
+            document.getElementById('res-crit').innerText = stats.auto; 
+        } else {
+            document.getElementById('res-crit').innerText = stats.critical;
+        }
+        
         document.getElementById('res-perf').innerText = stats.perfect;
         document.getElementById('res-good').innerText = stats.good;
         document.getElementById('res-miss').innerText = stats.miss;
         document.getElementById('res-maxcombo').innerText = stats.maxCombo;
 
         const msg = document.getElementById('failed-msg');
-        msg.style.display = stats.score<600000 ? 'block' : 'none';
+        
+        const threshold = CLEAR_THRESHOLDS[selectedDiff];
+        if (stats.score < threshold && !userSettings.autoMode) {
+            msg.innerText = "CHALLENGE FAILED";
+            msg.style.display = 'block';
+        } else {
+            msg.style.display = 'none';
+        }
         
         const area = document.getElementById('stamp-area');
         area.innerHTML = '';
-        if(stats.miss===0) {
-            const d=document.createElement('div');
-            d.innerText = stats.good===0 ? "ALL PERFECT" : "FULL COMBO";
-            d.style.cssText = "color:"+(stats.good===0?"#0ff":"#fc0")+"; font-size:30px; font-weight:bold; border:3px solid currentColor; display:inline-block; padding:5px 15px; transform:rotate(-10deg);";
+
+        const d = document.createElement('div');
+        
+        if (userSettings.autoMode) {
+            d.innerText = "AUTO MODE";
+            d.className = "stamp-auto";
             area.appendChild(d);
+        } else {
+            if(stats.miss === 0) {
+                if (stats.score === 1000000) {
+                    d.innerText = "ALL CRITICAL";
+                    d.className = "stamp-critical";
+                } else {
+                    d.className = "stamp-normal";
+                    d.innerText = stats.good === 0 ? "ALL PERFECT" : "FULL COMBO";
+                    d.style.color = stats.good === 0 ? "#0ff" : "#fc0";
+                }
+                area.appendChild(d);
+            }
         }
         
         let grade='F', color='#888';
@@ -731,9 +1161,169 @@
         else if(stats.score>=900000) { grade='A'; color='#0ff'; }
         else if(stats.score>=800000) { grade='B'; color='#0f0'; }
         else if(stats.score>=600000) { grade='C'; color='#ff0'; }
+        
         const gEl = document.getElementById('res-grade');
         gEl.innerText = grade; gEl.style.color = color;
     }
+    //当前软件版本号
+    const CURRENT_VERSION_KEY = 'V.1.1.0_alpha';
+
+    function checkUpdatePopup() {
+        if (!localStorage.getItem(CURRENT_VERSION_KEY)) {
+            document.getElementById('update-modal').style.display = 'flex';
+        }
+    }
+
+    window.closeUpdateModal = function() {
+        document.getElementById('update-modal').style.display = 'none';
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        previewRequestId++;
+        playPreview(currentSong, previewRequestId);
+        localStorage.setItem(CURRENT_VERSION_KEY, 'true');
+    };
+
+    // --- 自动节奏校准逻辑 ---
+    let isCalibrating = false;
+    let calibTapHistory = [];
+    let calibNextBeatTime = 0;
+    let calibIntervalId;
+    const CALIB_BPM = 100;
+    const CALIB_INTERVAL = 60 / CALIB_BPM;
+    const TOTAL_TAPS_NEEDED = 8;
+
+    function startCalibration() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        isCalibrating = true;
+        calibTapHistory = [];
+        
+        document.getElementById('calibration-overlay').style.display = 'flex';
+        document.getElementById('calib-step-1').style.display = 'block';
+        document.getElementById('calib-result').style.display = 'none';
+        document.getElementById('calib-apply-btn').style.display = 'none';
+        document.getElementById('calib-progress-bar').style.width = '0%';
+        document.getElementById('calib-status').innerText = "Listen to the beat...";
+        document.getElementById('calib-beat-circle').innerText = "♪";
+        
+        stopPreview();
+
+        calibNextBeatTime = audioCtx.currentTime + 0.5;
+        playCalibBeatLoop();
+    }
+
+    function stopCalibration() {
+        isCalibrating = false;
+        clearTimeout(calibIntervalId);
+        document.getElementById('calibration-overlay').style.display = 'none';
+        previewRequestId++;
+        playPreview(currentSong, previewRequestId);
+    }
+
+    function playCalibBeatLoop() {
+        if (!isCalibrating) return;
+
+        const currentTime = audioCtx.currentTime;
+        if (currentTime >= calibNextBeatTime - 0.05) {
+            playCalibSound(calibNextBeatTime);
+            const delay = Math.max(0, (calibNextBeatTime - currentTime) * 1000);
+            setTimeout(() => {
+                if(!isCalibrating) return;
+                const circle = document.getElementById('calib-beat-circle');
+                circle.classList.add('beat-active');
+                setTimeout(() => circle.classList.remove('beat-active'), 100);
+            }, delay);
+
+            calibNextBeatTime += CALIB_INTERVAL;
+        }
+        calibIntervalId = setTimeout(playCalibBeatLoop, 20);
+    }
+
+    function playCalibSound(time) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.setValueAtTime(880, time); 
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(0.5, time + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+        osc.start(time);
+        osc.stop(time + 0.1);
+    }
+
+    function handleCalibInput() {
+        if (!isCalibrating || calibTapHistory.length >= TOTAL_TAPS_NEEDED) return;
+        const now = audioCtx.currentTime;
+        const prevBeat = calibNextBeatTime - CALIB_INTERVAL;
+        const nextBeat = calibNextBeatTime;
+        const diffPrev = now - prevBeat; 
+        const diffNext = nextBeat - now; 
+        let targetBeat = (diffPrev < diffNext) ? prevBeat : nextBeat;
+        let offset = (now - targetBeat) * 1000;
+        
+        const circle = document.getElementById('calib-beat-circle');
+        circle.classList.remove('beat-active');
+        void circle.offsetWidth;
+        circle.classList.add('tap-feedback');
+        setTimeout(() => circle.classList.remove('tap-feedback'), 100);
+
+        calibTapHistory.push(offset);
+        const progress = (calibTapHistory.length / TOTAL_TAPS_NEEDED) * 100;
+        document.getElementById('calib-progress-bar').style.width = progress + "%";
+        
+        const avg = calculateAverage(calibTapHistory);
+        document.getElementById('calib-status').innerText = `Recording... ${calibTapHistory.length}/${TOTAL_TAPS_NEEDED} (Cur: ${offset.toFixed(0)}ms)`;
+
+        if (calibTapHistory.length >= TOTAL_TAPS_NEEDED) {
+            finishCalibration();
+        }
+    }
+
+    function calculateAverage(arr) {
+        if (arr.length > 4) {
+            arr.sort((a,b) => a-b);
+            arr = arr.slice(1, arr.length-1);
+        }
+        const sum = arr.reduce((a, b) => a + b, 0);
+        return Math.floor(sum / arr.length);
+    }
+
+    function finishCalibration() {
+        isCalibrating = false;
+        clearTimeout(calibIntervalId);
+        const finalOffset = calculateAverage(calibTapHistory);
+        document.getElementById('calib-status').innerText = "Calculation Complete";
+        document.getElementById('calib-result').style.display = 'block';
+        document.getElementById('calib-result').innerText = `Recommended Offset: ${finalOffset} ms`;
+        const applyBtn = document.getElementById('calib-apply-btn');
+        applyBtn.style.display = 'inline-block';
+        applyBtn.dataset.offset = finalOffset;
+    }
+
+    function applyCalibration() {
+        const val = parseInt(document.getElementById('calib-apply-btn').dataset.offset);
+        userSettings.offset = val;
+        document.getElementById('offset-input').value = val;
+        saveSettings();
+        alert(`已应用延迟: ${val}ms`);
+        stopCalibration();
+    }
+
+    window.addEventListener('keydown', e => {
+        if (isCalibrating && (e.code === 'Space' || e.code.startsWith('Arrow') || e.code.startsWith('Key'))) {
+            handleCalibInput();
+        }
+    });
+    
+    document.getElementById('calibration-overlay').addEventListener('mousedown', (e) => {
+        if(e.target.tagName !== 'BUTTON') {
+            handleCalibInput();
+        }
+    });
 
     init();
 </script>

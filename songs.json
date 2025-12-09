@@ -85,13 +85,13 @@
     "artist": "SEIFU-MEIGETSU(Drop x Yura Hatsuki)",
     "charter": "Nana_Chan",
     "tags": ["太鼓达人", "Official"],
-    "cover": "assets/SoulStone -噬暗马戏团/cover.jpg",
+    "cover": "assets/SoulStone -噬暗马戏团/cover.jpeg",
     "audio": "assets/SoulStone -噬暗马戏团/song.mp3",
     "preview_start": 56,
     "charts": {
       "easy": null,
       "normal": null,
-      "hard": null,
+      "hard": "assets/SoulStone -噬暗马戏团/hard.json",
       "expert":"assets/SoulStone -噬暗马戏团/expert.json"
     }
   },
@@ -100,7 +100,7 @@
     "title": "Bling-Bang-Bang-Born（FULL）",
     "artist": "RAISE A SUILEN",
     "charter": "Nana_Chan",
-    "tags": ["BanG Dream!", "Official"],
+    "tags": ["BanG Dream!", "Official", "Animate"],
     "cover": "assets/Bling-Bang-Bang-Born（FULL）/cover.png",
     "audio": "assets/Bling-Bang-Bang-Born（FULL）/song.mp3",
     "preview_start": 63,
@@ -109,6 +109,22 @@
       "normal": null,
       "hard": null,
       "expert":"assets/Bling-Bang-Bang-Born（FULL）/expert.json"
+    }
+  },
+  {
+    "id": "青空のラプソディ",
+    "title": "青空のラプソディ",
+    "artist": "Morfonica×fhána",
+    "charter": "Nana_Chan",
+    "tags": ["BanG Dream!", "Official", "Animate"],
+    "cover": "assets/青空のラプソディ/cover.png",
+    "audio": "assets/青空のラプソディ/song.mp3",
+    "preview_start": 53,
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert":"assets/青空のラプソディ/expert.json"
     }
   }
 ]
