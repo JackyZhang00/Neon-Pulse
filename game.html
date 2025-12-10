@@ -288,6 +288,21 @@
         }
         #settings-btn:hover { border-color: #0ff; color: #0ff; background: rgba(0,255,255,0.1); }
 
+        /* 【NEW】收件箱按钮样式 */
+        #mailbox-btn {
+            position: absolute; top: 30px; right: 160px; z-index: 20;
+            background: transparent; border: 1px solid #666; color: #aaa;
+            padding: 8px 15px; border-radius: 20px; cursor: pointer;
+            font-weight: bold; transition: all 0.3s;
+            display: flex; align-items: center; gap: 5px;
+        }
+        #mailbox-btn:hover { border-color: #f05; color: #f05; background: rgba(255,0,85,0.1); }
+        .badge-notification {
+            width: 10px; height: 10px; background: #f05; border-radius: 50%;
+            position: absolute; top: 0; right: 0; box-shadow: 0 0 5px #f05;
+            display: none; animation: pulse-badge 1s infinite;
+        }
+
         #settings-overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 80; backdrop-filter: blur(5px);
@@ -324,7 +339,6 @@
         .stat-label { color: #aaa; }
         .stat-val { font-weight: bold; }
 
-        /* NEW: 新纪录徽章样式 */
         .new-record-badge {
             position: absolute;
             top: 20%; right: -25px;
@@ -370,6 +384,53 @@
         .calib-progress-bar { height: 100%; background: #0ff; width: 0%; transition: width 0.2s; box-shadow: 0 0 10px #0ff; }
         .calib-instruction { color: #888; margin-bottom: 20px; text-align: center; line-height: 1.6; }
         .calib-result-text { font-size: 24px; color: #0ff; font-weight: bold; margin-top: 10px; }
+
+        /* 【NEW】收件箱界面样式 */
+        #mailbox-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 90; backdrop-filter: blur(8px);
+            align-items: center; justify-content: center;
+        }
+        .mailbox-panel {
+            background: #111; border: 1px solid #444; width: 800px; height: 500px;
+            display: flex; border-radius: 8px; box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+        .mail-list {
+            width: 300px; background: #1a1a1a; border-right: 1px solid #333;
+            overflow-y: auto; display: flex; flex-direction: column;
+        }
+        .mail-item {
+            padding: 15px; border-bottom: 1px solid #333; cursor: pointer;
+            transition: background 0.2s; position: relative;
+        }
+        .mail-item:hover { background: #222; }
+        .mail-item.active { background: #2a2a2a; border-left: 3px solid #f05; }
+        .mail-item-title { font-weight: bold; margin-bottom: 5px; color: #eee; }
+        .mail-item-sender { font-size: 12px; color: #888; }
+        .mail-item.unread::after {
+            content: 'NEW'; position: absolute; top: 15px; right: 15px;
+            background: #f05; color: #fff; font-size: 10px; padding: 2px 5px;
+            border-radius: 4px; font-weight: bold;
+        }
+        .mail-content-area {
+            flex: 1; padding: 30px; display: flex; flex-direction: column; position: relative;
+            background: 
+                radial-gradient(circle at top right, rgba(255,0,85,0.05) 0%, transparent 40%),
+                linear-gradient(to bottom, #111 0%, #0d0d0d 100%);
+        }
+        .mail-detail-header { border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+        .mail-detail-title { font-size: 28px; font-weight: 900; color: #fff; margin-bottom: 10px; }
+        .mail-detail-meta { color: #666; font-size: 14px; display: flex; justify-content: space-between; }
+        .mail-body {
+            font-size: 16px; line-height: 1.6; color: #ccc; white-space: pre-wrap; flex: 1; overflow-y: auto;
+        }
+        .btn-close-mail {
+            position: absolute; top: 10px; right: 10px; background: transparent; border: none;
+            color: #666; font-size: 24px; cursor: pointer;
+        }
+        .btn-close-mail:hover { color: #fff; }
+
     </style>
 </head>
 <body>
@@ -431,12 +492,37 @@
     <button onclick="pauseGame()" style="pointer-events:auto; position:absolute; top:20px; left:50%; transform:translateX(-50%); background:transparent; border:1px solid #fff; color:#fff; padding:5px 15px; cursor:pointer;">PAUSE (ESC)</button>
 </div>
 
-<!-- 修改：在暂停菜单中增加重玩按钮 -->
+<!-- 暂停菜单 -->
 <div id="pause-menu" class="overlay" style="display:none;">
     <h1 style="color:#fff;">PAUSED</h1>
     <button class="main-btn" onclick="startResumeCountdown()">RESUME</button>
     <button class="main-btn" onclick="retryGame()" style="margin-top:20px; background:#00ccff; color:black;">RETRY</button>
     <button class="main-btn" onclick="backToMenu()" style="margin-top:20px; background:#f05; color:white;">EXIT</button>
+</div>
+
+<!-- 【NEW】收件箱弹窗 -->
+<div id="mailbox-overlay">
+    <div class="mailbox-panel">
+        <div class="mail-list" id="mail-list-container">
+            <!-- 邮件列表将在这里动态生成 -->
+        </div>
+        <div class="mail-content-area">
+            <button class="btn-close-mail" onclick="closeMailbox()">×</button>
+            <div id="mail-detail-view" style="display:none; height:100%; flex-direction:column;">
+                <div class="mail-detail-header">
+                    <div class="mail-detail-title" id="mail-view-title">Title</div>
+                    <div class="mail-detail-meta">
+                        <span id="mail-view-sender">From: Sender</span>
+                        <span id="mail-view-date">Date</span>
+                    </div>
+                </div>
+                <div class="mail-body" id="mail-view-content">Content...</div>
+            </div>
+            <div id="mail-empty-state" style="display:flex; height:100%; align-items:center; justify-content:center; color:#444;">
+                <div>SELECT A MAIL TO READ</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="settings-overlay">
@@ -498,21 +584,23 @@
 
 <div id="update-modal" class="overlay" style="display:none; z-index: 100;">
     <div id="update-box">
-        <div class="update-header">System Update // V1.2.0_alpha</div>
+        <div class="update-header">System Update // V1.3.0_alpha</div>
         <div class="update-content">
-            <div class="update-list-item"><span class="update-tag">FIX</span><strong>修复</strong><br><span style="color:#aaa;">选歌界面歌曲预览和游戏界面音乐播放的bug</span></div>
-            <div class="update-list-item"><span class="update-tag">FIX</span><strong>修复</strong><br><span style="color:#aaa;">结尾判定ALL PERFECT与ALL CRITICAL错误的bug</span></div>
-            <div class="update-list-item"><span class="update-tag">NEW</span><strong>新增</strong><br><span style="color:#aaa;">打击音效（目前有一款BanG Dream!音效和太鼓音效，后续会增加）</span></div>
-            <div class="update-list-item"><span class="update-tag">NEW</span><strong>新增</strong><br><span style="color:#aaa;">设置菜单，并调整原有选项布局</span></div>
-            <div class="update-list-item"><span class="update-tag">NEW</span><strong>新增</strong><br><span style="color:#aaa;">成绩记录功能。将记录每种难度的最高分以及判定结果</span></div>
-            <div class="update-list-item"><span class="update-tag">NEW</span><strong>新增</strong><br><span style="color:#aaa;">开屏界面与看板娘</span></div>
-            <div class="update-list-item"><span class="update-tag">NEW</span><strong>优化</strong><br><span style="color:#aaa;">游戏暂停后可重新开始</span></div>
+            <div class="update-list-item"><span class="update-tag">NEW</span><strong>新增功能：收件箱</strong><br><span style="color:#aaa;">在右上角新增了“收件箱”，听说N-07给你写了一封信，请务必看一下；</span></div>
+            <div class="update-list-item"><span class="update-tag">NEW</span><strong>新增bad判定</strong><br><span style="color:#aaa;">过关更容易了！</span></div>
+            <div class="update-list-item"><span class="update-tag">FIX</span><strong>修复</strong><br><span style="color:#aaa;">修复了一些播放音乐和音效的bug</span></div>
         </div>
         <div style="text-align: center;"><button class="main-btn" onclick="closeUpdateModal()">CONFIRM</button></div>
     </div>
 </div>
 
 <div id="song-select-screen" class="overlay" style="display: none;">
+    <!-- 【NEW】收件箱按钮 -->
+    <button id="mailbox-btn" onclick="openMailbox()">
+        <span style="font-size:20px;">📩</span> 邮件
+        <div id="mail-notification" class="badge-notification"></div>
+    </button>
+
     <button id="settings-btn" onclick="openSettings()">
         <span style="font-size:20px;">⚙️</span> SETTINGS
     </button>
@@ -545,7 +633,6 @@
 
 <div id="result-screen" class="overlay" style="display:none;">
     <div id="result-card">
-        <!-- NEW: 新纪录徽章，默认隐藏 -->
         <div id="new-record-badge" class="new-record-badge">NEW RECORD!</div>
 
         <h2 style="color:#aaa; letter-spacing:5px; margin:0;">RESULT</h2>
@@ -556,6 +643,8 @@
             <div class="stat-row" style="color:#ff00ff"><span class="stat-label">CRITICAL</span><span class="stat-val" id="res-crit">0</span></div>
             <div class="stat-row" style="color:#ffffff"><span class="stat-label">PERFECT</span><span class="stat-val" id="res-perf">0</span></div>
             <div class="stat-row" style="color:#ffcc00"><span class="stat-label">GOOD</span><span class="stat-val" id="res-good">0</span></div>
+            <!-- 【NEW】新增 BAD 统计行 -->
+            <div class="stat-row" style="color:#a300cc"><span class="stat-label">BAD</span><span class="stat-val" id="res-bad">0</span></div>
             <div class="stat-row" style="color:#ff0055"><span class="stat-label">MISS</span><span class="stat-val" id="res-miss">0</span></div>
             <div style="height:1px; background:#444; margin:5px 0;"></div>
             <div class="stat-row"><span class="stat-label">MAX COMBO</span><span class="stat-val" id="res-maxcombo">0</span></div>
@@ -576,7 +665,7 @@
     let loadedBuffers = {};         
     let synthBuffer = null;         
     let currentSong = null;
-    let currentChartOffset = 0; // 修复offset谱面支持
+    let currentChartOffset = 0; 
     let songList = [], filteredList = [];
     let currentTag = 'ALL', selectedDiff = 'normal';
     
@@ -603,7 +692,7 @@
     let notes = [], events = [], particles = [];
     let startTime = 0;
     let audioBuffer = null;
-    let stats = { score:0, rawScore:0, maxCombo:0, combo:0, miss:0, good:0, perfect:0, critical:0, auto:0 };
+    let stats = { score:0, rawScore:0, maxCombo:0, combo:0, miss:0, bad:0, good:0, perfect:0, critical:0, auto:0 };
     let totalScoreUnit = 0; 
     let animationFrameId;
     let shakeIntensity = 0; 
@@ -619,7 +708,111 @@
     const JUDGE_CRITICAL = 0.04;
     const JUDGE_PERFECT = 0.08;
     const JUDGE_GOOD = 0.2;
+    const JUDGE_BAD = 0.32;
     const JUDGE_TRAP = 0.35; 
+
+    // --- 【NEW】收件箱逻辑系统 ---
+    let mailData = [];
+    // 默认演示邮件，防止没有 mails.json 文件时报错
+    const DEFAULT_MAILS = [
+        {
+            id: "system_welcome",
+            title: "Welcome to Neon Pulse",
+            sender: "System",
+            date: "2025-01-01",
+            content: "Welcome, Runner!\n\nThis is your private inbox. Check here for updates, rewards, and messages from the developers.\n\nEnjoy the rhythm!"
+        }
+    ];
+
+    async function initMailSystem() {
+        try {
+            // 尝试读取同级目录下的 mails.json 文件
+            const response = await fetch('mails.json');
+            if (response.ok) {
+                mailData = await response.json();
+            } else {
+                mailData = DEFAULT_MAILS;
+            }
+        } catch (e) {
+            console.log("Could not load mails.json, using default.", e);
+            mailData = DEFAULT_MAILS;
+        }
+        checkUnreadMails();
+    }
+
+    function checkUnreadMails() {
+        const readList = JSON.parse(localStorage.getItem('neon_read_mails') || '[]');
+        let unreadCount = 0;
+        mailData.forEach(mail => {
+            if (!readList.includes(mail.id)) unreadCount++;
+        });
+        
+        const badge = document.getElementById('mail-notification');
+        if (unreadCount > 0) {
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    window.openMailbox = function() {
+        document.getElementById('mailbox-overlay').style.display = 'flex';
+        renderMailList();
+    };
+
+    window.closeMailbox = function() {
+        document.getElementById('mailbox-overlay').style.display = 'none';
+        checkUnreadMails(); // 关闭时刷新红点状态
+    };
+
+    function renderMailList() {
+        const container = document.getElementById('mail-list-container');
+        container.innerHTML = '';
+        
+        const readList = JSON.parse(localStorage.getItem('neon_read_mails') || '[]');
+
+        mailData.forEach((mail, index) => {
+            const isRead = readList.includes(mail.id);
+            const div = document.createElement('div');
+            div.className = 'mail-item' + (isRead ? '' : ' unread');
+            div.innerHTML = `
+                <div class="mail-item-title">${mail.title}</div>
+                <div class="mail-item-sender">${mail.sender}</div>
+            `;
+            div.onclick = () => selectMail(index, div);
+            container.appendChild(div);
+        });
+
+        // Reset view
+        document.getElementById('mail-empty-state').style.display = 'flex';
+        document.getElementById('mail-detail-view').style.display = 'none';
+    }
+
+    function selectMail(index, el) {
+        // UI 更新
+        document.querySelectorAll('.mail-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        el.classList.remove('unread'); // 视觉上去掉未读标记
+
+        const mail = mailData[index];
+        
+        // 显示内容
+        document.getElementById('mail-empty-state').style.display = 'none';
+        const detailView = document.getElementById('mail-detail-view');
+        detailView.style.display = 'flex';
+        
+        document.getElementById('mail-view-title').innerText = mail.title;
+        document.getElementById('mail-view-sender').innerText = "From: " + mail.sender;
+        document.getElementById('mail-view-date').innerText = mail.date || "";
+        document.getElementById('mail-view-content').innerHTML = mail.content;
+
+        // 标记为已读并保存
+        const readList = JSON.parse(localStorage.getItem('neon_read_mails') || '[]');
+        if (!readList.includes(mail.id)) {
+            readList.push(mail.id);
+            localStorage.setItem('neon_read_mails', JSON.stringify(readList));
+        }
+    }
 
     // --- 成绩存储逻辑 ---
     const CLEAR_TYPE = {
@@ -767,16 +960,29 @@
 
     async function loadSoundPack(packId) {
         if (!audioCtx) return;
+        
+        // 缓存检查：如果已经加载过，直接返回
+        if (loadedBuffers[packId] && loadedBuffers[packId].length > 0) {
+            return; 
+        }
+
         const pack = soundPackConfig.find(p => p.id === packId);
-        if (!pack || pack.type === 'synth' || loadedBuffers[packId]) return;
+        if (!pack || pack.type === 'synth') return;
         
         const promises = pack.files.map(async (url) => {
             try {
                 const res = await fetch(url);
-                return await audioCtx.decodeAudioData(await res.arrayBuffer());
-            } catch (e) { return null; }
+                const buf = await res.arrayBuffer();
+                return await audioCtx.decodeAudioData(buf);
+            } catch (e) { 
+                console.warn("Failed to load hit sound:", url);
+                return null; 
+            }
         });
-        loadedBuffers[packId] = await Promise.all(promises);
+
+        const buffers = await Promise.all(promises);
+        // 过滤掉加载失败的 null
+        loadedBuffers[packId] = buffers.filter(b => b !== null);
     }
 
     function initSynthSound() {
@@ -799,6 +1005,7 @@
     async function init() {
         loadSettings();
         await initSoundSystem();
+        initMailSystem(); // 【NEW】初始化邮件系统
 
         try {
             const res = await fetch('songs.json');
@@ -1012,34 +1219,75 @@
 
         const loadingOverlay = document.getElementById('loading-overlay');
         loadingOverlay.style.display = 'flex';
-        document.getElementById('loading-text').innerText = "Downloading & Decoding...";
+        document.getElementById('loading-text').innerText = "Loading Assets & Decoding...";
         document.getElementById('song-select-screen').style.display = 'none';
         
         try {
+            // 1. 准备加载任务列表
+            const tasks = [];
+
+            // A. 任务：加载谱面和音乐
             if (currentSong.id === 'demo') {
-                await new Promise(r => setTimeout(r, 1000));
-                const sr = audioCtx.sampleRate;
-                audioBuffer = audioCtx.createBuffer(1, sr * 30, sr);
-                notes = []; events = [{time:5, type:'shake'}, {time:10, type:'shake'}];
-                for(let i=0; i<30; i++) notes.push({time:2+i*0.8, lane:i%5, duration:i%4===0?1:0});
+                // Demo 歌曲的特殊处理（生成模拟数据）
+                tasks.push(new Promise(async (resolve) => {
+                     await new Promise(r => setTimeout(r, 1000)); // 模拟加载延迟
+                     const sr = audioCtx.sampleRate;
+                     audioBuffer = audioCtx.createBuffer(1, sr * 30, sr);
+                     // 简单的生成静音或白噪作为Demo音频
+                     const data = audioBuffer.getChannelData(0);
+                     for(let i=0; i<data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.1;
+                     
+                     notes = []; events = [{time:5, type:'shake'}, {time:10, type:'shake'}];
+                     for(let i=0; i<30; i++) notes.push({time:2+i*0.8, lane:i%5, duration:i%4===0?1:0});
+                     resolve();
+                }));
             } else {
+                // 正常歌曲：加入 Fetch 任务
                 const chartUrl = currentSong.charts[selectedDiff];
-                const [audioData, chartData] = await Promise.all([
-                    fetch(currentSong.audio).then(r => r.arrayBuffer()),
-                    fetch(chartUrl).then(r => r.json())
-                ]);
-                audioBuffer = await audioCtx.decodeAudioData(audioData);
-                notes = chartData.notes||[]; 
-                events = chartData.events||[];
-                // 读取谱面定义的 offset，如果没有则默认为 0
-                currentChartOffset = chartData.offset || 0; 
-                // ----------------
+                
+                // 任务：获取并解码歌曲音频
+                const audioTask = fetch(currentSong.audio)
+                    .then(r => r.arrayBuffer())
+                    .then(buffer => audioCtx.decodeAudioData(buffer))
+                    .then(decoded => { audioBuffer = decoded; });
+                
+                // 任务：获取谱面JSON
+                const chartTask = fetch(chartUrl)
+                    .then(r => r.json())
+                    .then(data => {
+                        notes = data.notes || [];
+                        events = data.events || [];
+                        currentChartOffset = data.offset || 0;
+                    });
+
+                tasks.push(audioTask);
+                tasks.push(chartTask);
             }
+
+            // B. 关键修复：加入音效加载任务
+            // 确保当前选择的音效包已加载。如果已加载，loadSoundPack 会直接返回（需要微调 loadSoundPack 逻辑或信任其缓存机制）
+            // 这里我们直接调用 loadSoundPack，因为它内部应该处理缓存检查
+            const currentPackId = userSettings.hitSoundPack;
+            if (currentPackId && currentPackId !== 'synth') {
+                // 如果缓存里没有这个包的数据，或者虽然有Key但数据为空，则强制等待加载
+                if (!loadedBuffers[currentPackId] || loadedBuffers[currentPackId].length === 0) {
+                     document.getElementById('loading-text').innerText = "Downloading Sound Effects...";
+                     tasks.push(loadSoundPack(currentPackId));
+                }
+            }
+
+            // 2. 等待所有资源（音乐、谱面、音效）全部就绪
+            await Promise.all(tasks);
+
         } catch(e) { 
             console.error(e);
-            alert("Error loading data"); loadingOverlay.style.display = 'none'; backToMenu(); return; 
+            alert("Error loading game data. Please check your connection."); 
+            loadingOverlay.style.display = 'none'; 
+            backToMenu(); 
+            return; 
         }
 
+        // 所有数据准备完毕，进入游戏
         loadingOverlay.style.display = 'none';
         document.getElementById('hud').style.display = 'block';
         document.getElementById('bg-layer').style.opacity = 0.5;
@@ -1067,7 +1315,7 @@
         notes.forEach(n => maxCombo += (n.duration>0 ? 2 : 1));
         totalScoreUnit = 1000000 / (maxCombo||1);
 
-        stats = { score:0, rawScore:0, maxCombo:0, combo:0, miss:0, good:0, perfect:0, critical:0, auto:0 };
+        stats = { score:0, rawScore:0, maxCombo:0, combo:0, miss:0, bad:0, good:0, perfect:0, critical:0, auto:0 };
         particles = [];
         shakeIntensity = 0; bgFlash = 0;
 
@@ -1124,13 +1372,19 @@
                 n.holding = false; n.processed = true; createExplosion(n.lane); handleHit(userSettings.autoMode ? 'auto' : 'critical', n.lane);
             }
         });
+        // 【MODIFIED】 这里的自动 Miss 判定时间要改成 JUDGE_BAD
+        // 只有当时间超过了 BAD 窗口，才算彻底错过
         notes.forEach(n => {
             if(n.processed) return;
             if(!userSettings.devMode && !userSettings.autoMode) {
-                if(!n.headHit && now > n.time + JUDGE_GOOD) { n.processed = true; handleHit('miss', n.lane); }
-                if(n.holding && now > n.time + n.duration + JUDGE_GOOD) { n.holding = false; n.processed = true; handleHit('miss', n.lane); }
+                // 如果当前时间超过了 BAD 窗口，才判定为 MISS
+                if(!n.headHit && now > n.time + JUDGE_BAD) { n.processed = true; handleHit('miss', n.lane); }
+                // 长按尾部同理
+                if(n.holding && now > n.time + n.duration + JUDGE_BAD) { n.holding = false; n.processed = true; handleHit('miss', n.lane); }
             }
         });
+
+        ctx.save(); ctx.clearRect(0,0,canvas.width,canvas.height);
 
         ctx.save(); ctx.clearRect(0,0,canvas.width,canvas.height);
         if (shakeIntensity > 0) {
@@ -1209,6 +1463,7 @@
     }
     window.addEventListener('keydown', e => {
         if(e.code === 'Escape') {
+            if(document.getElementById('mailbox-overlay').style.display === 'flex') { closeMailbox(); return; }
             if(document.getElementById('settings-overlay').style.display === 'flex') { closeSettings(); return; }
             if(isPlaying) { if(isPaused) startResumeCountdown(); else pauseGame(); } return;
         }
@@ -1223,12 +1478,29 @@
             if(note) {
                 const diff = note.time - now;
                 const absDiff = Math.abs(diff);
+                // 【MODIFIED】 判定逻辑增加 BAD
                 if (absDiff < JUDGE_GOOD) {
                     note.headHit = true;
-                    let type = 'good'; if(absDiff < JUDGE_CRITICAL) type = 'critical'; else if(absDiff < JUDGE_PERFECT) type = 'perfect';
-                    if(note.duration>0) { note.holding = true; handleHit(type, lane); } else { note.processed = true; handleHit(type, lane); }
+                    let type = 'good'; 
+                    if(absDiff < JUDGE_CRITICAL) type = 'critical'; 
+                    else if(absDiff < JUDGE_PERFECT) type = 'perfect';
+                    
+                    if(note.duration>0) { note.holding = true; handleHit(type, lane); } 
+                    else { note.processed = true; handleHit(type, lane); }
                     createExplosion(lane);
-                } else { note.processed = true; handleHit('miss', lane); }
+                } else if (absDiff < JUDGE_BAD) {
+                    // 【NEW】 BAD 判定逻辑
+                    // 介于 GOOD 和 MISS 之间
+                    note.headHit = true;
+                    if(note.duration>0) { note.holding = true; handleHit('bad', lane); }
+                    else { note.processed = true; handleHit('bad', lane); }
+                    // BAD 是否有打击特效？可以有，也可以没有，这里给个小反馈
+                    createExplosion(lane); 
+                } else { 
+                    // 超过了 BAD 但在 TRAP 范围内 (太早按了或者太晚按了)
+                    // 原有逻辑是直接 MISS
+                    note.processed = true; handleHit('miss', lane); 
+                }
             }
         }
     });
@@ -1244,24 +1516,52 @@
                 note.holding = false; note.processed = true;
                 const diff = (note.time + note.duration) - now;
                 const absDiff = Math.abs(diff);
+                // 【MODIFIED】 长按松手判定增加 BAD
                 if(absDiff < JUDGE_GOOD) {
-                    if(absDiff < JUDGE_CRITICAL) handleHit('critical', lane); else if(absDiff < JUDGE_PERFECT) handleHit('perfect', lane); else handleHit('good', lane);
-                } else { handleHit('miss', lane); }
+                    if(absDiff < JUDGE_CRITICAL) handleHit('critical', lane); 
+                    else if(absDiff < JUDGE_PERFECT) handleHit('perfect', lane); 
+                    else handleHit('good', lane);
+                } else if (absDiff < JUDGE_BAD) {
+                    // 【NEW】 长按松手 BAD
+                    handleHit('bad', lane);
+                } else { 
+                    handleHit('miss', lane); 
+                }
             }
         }
     });
 
+    // 【MODIFIED】 核心处理函数：增加 bad 类型
     function handleHit(type, lane) {
         if (type !== 'miss') playHitSound(lane);
+        
         let text="", color="#fff", isRainbow=false;
-        if(type==='miss') { stats.combo=0; stats.miss++; text="MISS"; color="#f05"; }
+        
+        if(type==='miss') { 
+            stats.combo=0; stats.miss++; text="MISS"; color="#f05"; 
+        } 
+        else if (type === 'bad') {
+            // 【NEW】 BAD 的处理逻辑
+            stats.combo = 0; // BAD 断连击
+            stats.bad++;     // 计数增加
+            let val = totalScoreUnit * 0.2; // 分数给予 20%
+            text = "BAD";
+            color = "#a300cc"; // 紫色
+            stats.rawScore += val; 
+            stats.score = Math.min(1000000, Math.round(stats.rawScore));
+        }
         else {
-            stats.combo++; if(stats.combo > stats.maxCombo) stats.maxCombo = stats.combo;
+            stats.combo++; 
+            if(stats.combo > stats.maxCombo) stats.maxCombo = stats.combo;
+            
             let val=0;
             if (type === 'auto') { stats.auto++; val = totalScoreUnit; text = "AUTO"; color = "#00ccff"; }
             else if(type==='critical') { stats.critical++; val=totalScoreUnit; text="PERFECT"; isRainbow=true; }
             else if(type==='perfect') { stats.perfect++; val=totalScoreUnit; text="PERFECT"; }
-            else { stats.good++; val=totalScoreUnit*0.5; text="GOOD"; color="#fc0"; }
+            else { 
+                // Good
+                stats.good++; val=totalScoreUnit*0.5; text="GOOD"; color="#fc0"; 
+            }
             stats.rawScore += val; stats.score = Math.min(1000000, Math.round(stats.rawScore));
         }
         const cEl = document.getElementById('combo-display');
@@ -1324,7 +1624,6 @@
     window.startResumeCountdown = startResumeCountdown;
     window.resumeGame = startResumeCountdown; 
 
-    // --- 新增重玩功能 ---
     window.retryGame = function() {
         if(bgmSource) { try { bgmSource.stop(); } catch(e){} }
         
@@ -1339,9 +1638,28 @@
     };
 
     window.backToMenu = function() {
-        if(bgmSource) try{bgmSource.stop();}catch(e){}
+        // 1. 停止播放
+        if(bgmSource) {
+            try{ bgmSource.stop(); } catch(e){}
+            bgmSource.disconnect(); // 断开连接
+            bgmSource = null;
+        }
+
+        // 2. 清理当前歌曲的大型资源 (内存优化)
+        audioBuffer = null; 
+        notes = [];
+        events = [];
+        particles = [];
+
+        // 注意：我们通常 *不* 删除 loadedBuffers (打击音效)，
+        // 因为下次进游戏还需要用，重新下载会变慢。
+        // 如果你必须强制清理所有缓存（例如为了内存极度紧张的设备），取消下面注释：
+        // loadedBuffers = {}; 
+        
         isPlaying = false;
         cancelAnimationFrame(animationFrameId);
+        
+        // 3. UI 恢复
         document.getElementById('pause-menu').style.display='none';
         document.getElementById('hud').style.display='none';
         document.getElementById('result-screen').style.display='none';
@@ -1351,11 +1669,13 @@
         document.getElementById('bg-layer').style.opacity = 0.5;
         document.getElementById('bg-layer').style.filter = "blur(8px) brightness(0.5)";
         
+        // 4. 恢复预览
         previewRequestId++;
-        updateRecordDisplay(); // 返回菜单时刷新显示
-        playPreview(currentSong, previewRequestId);
+        updateRecordDisplay(); 
+        if(currentSong) playPreview(currentSong, previewRequestId);
     };
 
+    // 【MODIFIED】 finishGame 需要显示 BAD 统计
     function finishGame() {
         isPlaying = false;
         cancelAnimationFrame(animationFrameId);
@@ -1365,7 +1685,6 @@
         const scoreEl = document.getElementById('res-score');
         const newRecordBadge = document.getElementById('new-record-badge');
         
-        // 重置状态
         newRecordBadge.style.display = 'none';
 
         if (userSettings.autoMode) {
@@ -1377,6 +1696,8 @@
         document.getElementById('res-crit').innerText = userSettings.autoMode ? stats.auto : stats.critical;
         document.getElementById('res-perf').innerText = stats.perfect;
         document.getElementById('res-good').innerText = stats.good;
+        // 【NEW】 显示 Bad 数量
+        document.getElementById('res-bad').innerText = stats.bad;
         document.getElementById('res-miss').innerText = stats.miss;
         document.getElementById('res-maxcombo').innerText = stats.maxCombo;
 
@@ -1400,26 +1721,20 @@
         if (userSettings.autoMode) {
             d.innerText = "AUTO MODE"; d.className = "stamp-auto"; area.appendChild(d);
         } else {
-            if(stats.miss === 0) {
-                // 修复逻辑：
-                // 原逻辑是 if (stats.score === 1000000) 判断 AC，但因为 Perfect 和 Critical 分数一样，导致误判。
-                // 新逻辑：必须 Good 为 0 且普通 Perfect 为 0，才是真正的 ALL CRITICAL。
-                
+            // 【MODIFIED】 修改 Full Combo 的判定条件
+            // 只有 Miss 和 Bad 都是 0 时，才算 FC
+            if(stats.miss === 0 && stats.bad === 0) {
                 if (stats.good === 0 && stats.perfect === 0) {
-                    // Case 1: 只有 Critical (真正的 ALL CRITICAL)
                     d.innerText = "ALL CRITICAL"; 
                     d.className = "stamp-critical";
                     clearType = CLEAR_TYPE.AC;
                 } else {
-                    // Case 2: 包含 Perfect 或 Good
                     d.className = "stamp-normal";
                     if (stats.good === 0) {
-                        // Case 2a: 没有 Good，但有普通 Perfect (ALL PERFECT)
                         d.innerText = "ALL PERFECT"; 
                         d.style.color = "#0ff";
                         clearType = CLEAR_TYPE.AP;
                     } else {
-                        // Case 2b: 有 Good (FULL COMBO)
                         d.innerText = "FULL COMBO"; 
                         d.style.color = "#fc0";
                         clearType = CLEAR_TYPE.FC;
@@ -1428,13 +1743,12 @@
                 area.appendChild(d);
             }
 
-            // NEW: 检查是否打破纪录
             const currentKey = `${currentSong.id}_${selectedDiff}`;
             const savedData = loadRecords()[currentKey];
             const oldScore = savedData ? savedData.score : 0;
 
             if (stats.score > oldScore) {
-                newRecordBadge.style.display = 'block'; // 显示新纪录徽章
+                newRecordBadge.style.display = 'block'; 
             }
 
             saveRecord(currentSong.id, selectedDiff, stats.score, clearType);
@@ -1450,8 +1764,7 @@
         gEl.innerText = grade; gEl.style.color = color;
     }
 
-    // ... (版本检测和校准逻辑 保持不变) ...
-    const CURRENT_VERSION_KEY = 'V1.2.0_alpha';
+    const CURRENT_VERSION_KEY = 'V1.3.0_alpha';
     function checkUpdatePopup() { if (!localStorage.getItem(CURRENT_VERSION_KEY)) document.getElementById('update-modal').style.display = 'flex'; }
     window.closeUpdateModal = function() {
         document.getElementById('update-modal').style.display = 'none';
