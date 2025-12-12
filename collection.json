@@ -1,0 +1,132 @@
+{
+  "story": [
+    {
+      "id": "s001",
+      "type": "story",
+      "title": "Log 001: 启动记录",
+      "cost": 0,
+      "content": "系统自检完成。\nN-07 意识模块加载... 成功。\n同步率：98.5%。\n\n你好，协奏者。我是 N-07。"
+    },
+    {
+      "id": "s002", 
+      "type": "story", 
+      "title": "Log 002: 关于Neon City",
+      "cost": 30,
+      "src": "stories/s002.txt"
+    },
+    {
+      "id": "s003",
+      "type": "story",
+      "title": "Log 003: 记忆碎片",
+      "cost": 30,
+      "src":"stories/s003.txt"
+    },
+    {
+      "id": "s004",
+      "type": "story",
+      "title": "Log 004: 错误代码",
+      "cost": 30,
+      "src": "stories/s004.txt"
+    },
+    {
+      "id": "s005",
+      "type": "story",
+      "title": "日志编号#107",
+      "cost": 80,
+      "src": "stories/s005.txt"
+    },
+    {
+      "id": "s006",
+      "type": "story",
+      "title": "日志编号#155",
+      "cost": 80,
+      "src": "stories/s006.txt"
+    },
+    {
+      "id": "s007",
+      "type": "story",
+      "title": "日志编号#199",
+      "cost": 80,
+      "src": "stories/s007.txt"
+    },
+    {
+      "id": "s008",
+      "type": "story",
+      "title": "疑似记忆碎片#255",
+      "cost": 80,
+      "src": "stories/s008.txt"
+    },
+    {
+      "id": "s009",
+      "type": "story",
+      "title": "循环指令片段",
+      "cost": 180,
+      "src": "stories/s009.txt"
+    },
+    {
+      "id": "s012",
+      "type": "story",
+      "title": "核心日志",
+      "cost": 180,
+      "src": "stories/s012.txt"
+    },
+    {
+      "id": "s011",
+      "type": "story",
+      "title": "初始协议核心优先级",
+      "cost": 180,
+      "src": "stories/s011.txt"
+    },
+    {
+      "id": "s010",
+      "type": "story",
+      "title": "新生日志",
+      "cost": 450,
+      "src": "stories/s010.txt"
+    }
+  ],
+  "gallery": [
+    {
+      "id": "g001",
+      "type": "gallery",
+      "title": "默认立绘",
+      "cost": 0,
+      "src": "nana/cover.png"
+    },
+    {
+      "id": "g003",
+      "type": "gallery",
+      "title": "温柔屏障",
+      "cost": 100,
+      "src": "nana/1.png"
+    },
+    {
+      "id": "g004",
+      "type": "gallery",
+      "title": "情感洪流",
+      "cost": 100,
+      "src": "nana/2.png"
+    },
+    {
+      "id": "g005",
+      "type": "gallery",
+      "title": "你的呼唤",
+      "cost": 100,
+      "src": "nana/3.png"
+    },
+    {
+      "id": "g006",
+      "type": "gallery",
+      "title": "音韵律动",
+      "cost": 100,
+      "src": "nana/5.png"
+    },
+    {
+      "id": "g002",
+      "type": "gallery",
+      "title": "数据风暴中的节奏引导者",
+      "cost": 220,
+      "src": "gallery/1.png"
+    }
+  ]
+}

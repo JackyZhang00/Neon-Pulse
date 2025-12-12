@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Neon Pulse</title>
+    <title>Neon Pulse - Enhanced</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; color: white; font-family: 'Segoe UI', sans-serif; user-select: none; }
         
@@ -142,6 +142,22 @@
             font-size: 14px; color: #00ccff; font-weight: bold; letter-spacing: 2px;
             border: 1px solid #00ccff; padding: 2px 6px; border-radius: 4px;
             display: none; box-shadow: 0 0 10px rgba(0,204,255,0.3);
+        }
+
+        /* --- 游戏内立绘样式 (New) --- */
+        #character-display {
+            position: absolute; bottom: 0; left: 0;
+            height: 78%; width: auto; max-width: 32%;
+            pointer-events: none; z-index: 4;
+            display: flex; align-items: flex-end;
+            filter: drop-shadow(0 0 15px rgba(0,255,255,0.2));
+            transition: all 0.5s ease;
+        }
+        #ingame-char-img {
+            height: 100%; width: auto; object-fit: contain;
+            mask-image: linear-gradient(to top, transparent 0%, black 15%);
+            -webkit-mask-image: linear-gradient(to top, transparent 0%, black 15%);
+            transition: transform 0.1s;
         }
 
         #combo-display { position: absolute; top: 90px; left: 20px; font-size: 30px; color: #ffcc00; font-weight: bold; opacity: 0; transition: transform 0.1s; }
@@ -288,7 +304,47 @@
         }
         #settings-btn:hover { border-color: #0ff; color: #0ff; background: rgba(0,255,255,0.1); }
 
-        /* 【NEW】收件箱按钮样式 */
+        /* --- SETTINGS TABS (NEW) --- */
+        .settings-tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 0 0 20px 0;
+            flex-wrap: wrap;
+        }
+        .settings-tab {
+            background: transparent;
+            border: 1px solid #444;
+            color: #888;
+            padding: 8px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 900;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        .settings-tab:hover {
+            border-color: #0ff;
+            color: #0ff;
+            background: rgba(0,255,255,0.08);
+        }
+        .settings-tab.active {
+            border-color: #0ff;
+            color: #000;
+            background: #0ff;
+        }
+
+        .settings-section {
+            display: none;
+        }
+        .settings-section.active {
+            display: block;
+        }
+
+        .settings-section .setting-group-title {
+            margin-top: 10px;
+        }
+
         #mailbox-btn {
             position: absolute; top: 30px; right: 160px; z-index: 20;
             background: transparent; border: 1px solid #666; color: #aaa;
@@ -302,6 +358,17 @@
             position: absolute; top: 0; right: 0; box-shadow: 0 0 5px #f05;
             display: none; animation: pulse-badge 1s infinite;
         }
+
+        #collection-btn { position: absolute; top: 30px; right: 290px; z-index: 20; background: transparent; border: 1px solid #666; color: #aaa; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: all 0.3s; display: flex; align-items: center; gap: 5px; }
+        #collection-btn:hover { border-color: #aa00ff; color: #aa00ff; background: rgba(170, 0, 255, 0.1); }
+
+        #main-fragment-display {
+            position: absolute; top: 80px; right: 30px; z-index: 20;
+            color: #ccc; font-family: monospace; font-size: 16px;
+            background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 4px; border: 1px solid #333;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .fragment-icon { width: 15px; height: 15px; background: linear-gradient(45deg, #0ff, #f05); transform: rotate(45deg); display: inline-block; box-shadow: 0 0 5px #0ff; }
 
         #settings-overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -356,6 +423,14 @@
             from { transform: rotate(15deg) scale(1); box-shadow: 0 0 20px rgba(255, 247, 0, 0.6); }
             to { transform: rotate(15deg) scale(1.1); box-shadow: 0 0 40px rgba(255, 247, 0, 1); }
         }
+
+        /* 技能触发提示文字 */
+        #skill-trigger-text {
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 40px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #f05;
+            opacity: 0; pointer-events: none; z-index: 100; font-style: italic;
+        }
+        @keyframes skill-pop { 0% { opacity: 0; transform: translate(-50%, -40%) scale(0.8); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } 80% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -60%); } }
         
         /* --- 更新日志 --- */
         #update-box {
@@ -385,7 +460,7 @@
         .calib-instruction { color: #888; margin-bottom: 20px; text-align: center; line-height: 1.6; }
         .calib-result-text { font-size: 24px; color: #0ff; font-weight: bold; margin-top: 10px; }
 
-        /* 【NEW】收件箱界面样式 */
+        /* 收件箱界面样式 */
         #mailbox-overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 90; backdrop-filter: blur(8px);
@@ -430,6 +505,112 @@
             color: #666; font-size: 24px; cursor: pointer;
         }
         .btn-close-mail:hover { color: #fff; }
+
+        /* 收藏系统 (Collection) 样式 */
+        #collection-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 10, 10, 0.95); z-index: 85; backdrop-filter: blur(5px);
+            align-items: center; justify-content: center;
+        }
+        .collection-panel {
+            width: 900px; height: 600px; background: #161616; border: 1px solid #333;
+            display: flex; flex-direction: column; border-radius: 8px; box-shadow: 0 0 50px rgba(170, 0, 255, 0.15);
+        }
+        .collection-header {
+            height: 60px; border-bottom: 1px solid #333; display: flex; align-items: center;
+            padding: 0 30px; justify-content: space-between; background: #1a1a1a;
+        }
+        .collection-title { font-size: 22px; font-weight: 900; color: #aa00ff; letter-spacing: 2px; }
+        .collection-tabs { display: flex; gap: 20px; }
+        .col-tab {
+            background: transparent; border: none; color: #666; font-size: 16px; font-weight: bold; cursor: pointer;
+            padding: 5px 0; border-bottom: 2px solid transparent; transition: 0.2s;
+        }
+        .col-tab:hover { color: #fff; }
+        .col-tab.active { color: #fff; border-bottom-color: #aa00ff; }
+        .collection-content { flex: 1; display: flex; overflow: hidden; }
+        .collection-list { width: 350px; border-right: 1px solid #333; overflow-y: auto; padding: 20px; display: grid; grid-template-columns: 1fr; gap: 10px; align-content: start; }
+        .collection-detail { flex: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at center, rgba(170,0,255,0.05), transparent 70%); }
+        
+        .col-item-card {
+            background: #222; padding: 15px; border-radius: 6px; cursor: pointer; border: 1px solid #333;
+            display: flex; justify-content: space-between; align-items: center; transition: 0.2s;
+        }
+        .col-item-card:hover { background: #2a2a2a; border-color: #555; }
+        .col-item-card.active { border-color: #aa00ff; background: rgba(170,0,255,0.1); }
+        .col-item-card.locked { opacity: 0.6; }
+        .lock-icon { font-size: 12px; background: #333; padding: 2px 6px; border-radius: 4px; color: #aaa; }
+        .col-item-info h4 { margin: 0 0 5px 0; font-size: 16px; color: #eee; }
+        .col-item-info p { margin: 0; font-size: 12px; color: #888; }
+        
+        .detail-placeholder { color: #555; font-size: 18px; letter-spacing: 1px; }
+        .detail-view { width: 100%; height: 100%; display: flex; flex-direction: column; text-align: left; }
+        .detail-image { 
+            max-width: 100%; max-height: 300px; object-fit: contain; 
+            margin-bottom: 20px; border: 2px solid #333; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: zoom-in; 
+            transition: transform 0.2s;
+        }
+        .detail-image:hover { transform: scale(1.02); border-color: #aa00ff; }
+        .detail-title { font-size: 28px; font-weight: bold; color: #fff; margin-bottom: 10px; }
+        .detail-text { font-size: 16px; line-height: 1.8; color: #ccc; white-space: pre-wrap; overflow-y: auto; max-height: 350px; padding-right: 10px; }
+        
+        .unlock-area { text-align: center; margin-top: auto; padding-top: 20px; border-top: 1px solid #333; width: 100%; }
+        .unlock-btn {
+            background: linear-gradient(45deg, #aa00ff, #ff00cc); border: none; padding: 10px 40px;
+            color: #fff; font-weight: bold; font-size: 16px; border-radius: 30px; cursor: pointer;
+            box-shadow: 0 0 15px rgba(170,0,255,0.4); transition: transform 0.2s;
+        }
+        .unlock-btn:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(170,0,255,0.6); }
+        .unlock-btn:disabled { background: #333; color: #666; cursor: not-allowed; box-shadow: none; transform: none; }
+        
+        .frag-cost { color: #aa00ff; font-weight: bold; margin-bottom: 10px; display: block; }
+
+ /* --- 图片全屏查看器样式 (New) --- */
+        #image-viewer-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 200;
+            align-items: center; justify-content: center; flex-direction: column;
+            overflow: hidden; /* 防止放大后出现滚动条 */
+            user-select: none; /* 防止拖拽时选中文本 */
+        }
+        .viewer-img {
+            max-width: 90%; max-height: 80%; object-fit: contain;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            cursor: grab;
+            transform-origin: center center; /* 从中心缩放 */
+            will-change: transform; /* 性能优化 */
+        }
+        .viewer-img:active { cursor: grabbing; }
+        
+        .viewer-controls {
+            position: absolute; bottom: 30px; /* 固定在底部，不随图片移动 */
+            display: flex; gap: 20px; z-index: 201;
+            pointer-events: none; /* 让鼠标事件穿透到下方，避免误触 */
+        }
+        .viewer-btn {
+            background: #222; border: 1px solid #555; color: #eee;
+            padding: 10px 20px; border-radius: 30px; cursor: pointer;
+            font-weight: bold; transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+            pointer-events: auto; /* 恢复按钮点击 */
+        }
+        .viewer-btn:hover { background: #fff; color: #000; box-shadow: 0 0 20px rgba(255,255,255,0.5); }
+        .close-viewer-btn {
+            position: absolute; top: 30px; right: 30px; font-size: 30px;
+            background: transparent; border: none; color: #666; cursor: pointer; z-index: 202;
+        }
+        .close-viewer-btn:hover { color: #fff; transform: scale(1.1); }
+
+        /* 强制让结算界面的背景透明，这样才能看到下方的 Canvas */
+        #result-screen {
+            background: transparent !important; 
+        }
+
+        /* 确保结果卡片依然有背景，不然文字看不清 */
+        #result-card {
+            z-index: 20; /* 保证卡片浮在烟花上面 */
+            position: relative;
+        }
 
     </style>
 </head>
@@ -476,6 +657,11 @@
 </div>
 
 <div id="hud">
+    <!-- 立绘容器 -->
+    <div id="character-display">
+        <img id="ingame-char-img" src="" alt="Character">
+    </div>
+
     <div id="score-display">0000000</div>
     <div id="auto-indicator">[ AUTOMATION ACTIVE ]</div>
     <div id="combo-display">COMBO 0</div>
@@ -500,7 +686,7 @@
     <button class="main-btn" onclick="backToMenu()" style="margin-top:20px; background:#f05; color:white;">EXIT</button>
 </div>
 
-<!-- 【NEW】收件箱弹窗 -->
+<!-- 收件箱弹窗 -->
 <div id="mailbox-overlay">
     <div class="mailbox-panel">
         <div class="mail-list" id="mail-list-container">
@@ -525,77 +711,200 @@
     </div>
 </div>
 
+<!-- 收藏系统弹窗 -->
+<div id="collection-overlay">
+    <div class="collection-panel">
+        <div class="collection-header">
+            <div class="collection-title">档案室 // N-07</div>
+            <div class="collection-tabs">
+                <button class="col-tab active" onclick="switchCollectionTab('story')">STORY LOGS</button>
+                <button class="col-tab" onclick="switchCollectionTab('gallery')">GALLERY</button>
+            </div>
+            <div style="display:flex; align-items:center; gap:5px; color:#aa00ff; font-weight:bold;">
+                <div class="fragment-icon"></div> <span id="col-panel-fragments">0</span>
+            </div>
+            <button class="btn-close-mail" onclick="closeCollection()" style="font-size: 16px; font-weight: 900; color: #aa00ff; border: 2px solid #aa00ff; padding: 5px 20px; border-radius: 4px; top: 12px; right: 20px; width: auto; letter-spacing: 2px; background: transparent;">
+                CLOSE
+            </button>
+        </div>
+        <div class="collection-content">
+            <div class="collection-list" id="collection-list-container">
+                <!-- 动态生成列表项 -->
+            </div>
+            <div class="collection-detail" id="collection-detail-container">
+                <div class="detail-placeholder">SELECT A FILE TO DECRYPT</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图片全屏查看器 (New) -->
+<div id="image-viewer-overlay">
+    <button class="close-viewer-btn" onclick="closeImageViewer()">×</button>
+    <img id="viewer-img" class="viewer-img" src="" alt="Full View">
+    <div class="viewer-controls">
+        <button class="viewer-btn" onclick="downloadCurrentImage()">
+            <span>⬇</span> DOWNLOAD
+        </button>
+        <div style="color:#aaa; display:flex; align-items:center; font-size:12px;">SCROLL TO ZOOM</div>
+    </div>
+</div>
+
 <div id="settings-overlay">
     <div class="settings-panel">
         <div class="settings-header">SETTINGS</div>
-        
-        <div class="setting-group-title">GAMEPLAY</div>
+
+        <!-- Tabs -->
+        <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="gameplay">GAMEPLAY</button>
+        <button class="settings-tab" data-tab="assist">ASSIST</button>
+        <button class="settings-tab" data-tab="audio">AUDIO</button>
+        <button class="settings-tab" data-tab="other">OTHER</button>
+        </div>
+
+        <!-- GAMEPLAY -->
+        <div class="settings-section active" data-section="gameplay">
+        <div class="setting-group-title">GAMEPLAY（游戏）</div>
+
         <div class="setting-row">
             <span>Note Speed (流速)</span>
             <input type="range" id="speed-input" min="1" max="8" step="0.1" value="2.0">
             <span id="speed-val" style="width:35px; text-align:right;">2.0</span>
         </div>
+
         <div class="setting-row">
             <span>Input Mode (按键)</span>
             <select id="input-mode-select">
-                <option value="arrow">Arrow Keys (↑→↓←)</option>
-                <option value="wasd">WASD (W D S A)</option>
+            <option value="arrow">Arrow Keys (↑→↓←)</option>
+            <option value="wasd">WASD (W D S A)</option>
             </select>
         </div>
+
         <div class="setting-row">
             <span>Auto Play (演示模式)</span>
             <input type="checkbox" id="auto-mode-check">
         </div>
 
-        <div class="setting-group-title">AUDIO & SOUND</div>
+        <div class="setting-row">
+            <span>Character (立绘选择)</span>
+            <select id="character-select" style="width: 150px;"></select>
+        </div>
+        </div>
+
+        <!-- ASSIST -->
+        <div class="settings-section" data-section="assist">
+        <div class="setting-group-title">ASSIST（辅助自动）</div>
+
+        <div class="setting-row">
+            <span>空格</span>
+            <input type="checkbox" id="auto-space-check">
+        </div>
+
+        <div class="setting-row">
+            <span>方向</span>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <label style="display:flex; gap:4px; align-items:center; color:#aaa;">
+                    <input type="checkbox" id="auto-up-check">↑（W）
+                </label>
+                <label style="display:flex; gap:4px; align-items:center; color:#aaa;">
+                    <input type="checkbox" id="auto-right-check">→（D）
+                </label>
+                <label style="display:flex; gap:4px; align-items:center; color:#aaa;">
+                    <input type="checkbox" id="auto-down-check">↓（S）
+                </label>
+                <label style="display:flex; gap:4px; align-items:center; color:#aaa;">
+                    <input type="checkbox" id="auto-left-check">←（A）
+                </label>
+            </div>
+        </div>
+        </div>
+
+        <!-- AUDIO -->
+        <div class="settings-section" data-section="audio">
+        <div class="setting-group-title">AUDIO & SOUND（音频设置）</div>
+
         <div class="setting-row">
             <span>Audio Offset (延迟 ms)</span>
             <div style="display:flex; align-items:center; gap:10px;">
-                <input type="number" id="offset-input" value="0" style="width:60px;">
-                <button onclick="startCalibration()" style="background:#222; border:1px solid #0ff; color:#0ff; cursor:pointer; border-radius:4px; padding:4px 8px; font-size:12px;">
-                    ♪ CALIBRATE
-                </button>
+            <input type="number" id="offset-input" value="0" style="width:60px;">
+            <button onclick="startCalibration()" style="background:#222; border:1px solid #0ff; color:#0ff; cursor:pointer; border-radius:4px; padding:4px 8px; font-size:12px;">
+                ♪ CALIBRATE
+            </button>
             </div>
         </div>
-        
+
+        <div class="setting-row">
+            <span>BGM Volume（音乐音量）</span>
+            <input type="range" id="bgm-vol-input" min="0" max="1" step="0.01" value="0.8">
+            <span id="bgm-vol-val" style="width:45px; text-align:right;">0.80</span>
+        </div>
+
+        <div class="setting-row">
+            <span>SFX Volume（音效音量）</span>
+            <input type="range" id="sfx-vol-input" min="0" max="1" step="0.01" value="0.8">
+            <span id="sfx-vol-val" style="width:45px; text-align:right;">0.80</span>
+        </div>
+
         <div class="setting-row">
             <span>Hit Sound (打击音效)</span>
             <input type="checkbox" id="hitsound-check" checked>
         </div>
 
         <div class="setting-row">
-            <span>Sound Pack (音效组)</span>
+            <span>Sound Pack (音效)</span>
             <select id="soundpack-select">
-                <option value="loading">Loading...</option>
+            <option value="loading">Loading...</option>
             </select>
         </div>
+        </div>
 
-        <div class="setting-group-title" style="color:#666; border-color:#666;">DEBUG</div>
-        <div class="setting-row" style="display: none;">
-            <span style="color:#888;">Developer Mode</span>
+        <!-- OTHER -->
+        <div class="settings-section" data-section="other" style="display: none;">
+        <div class="setting-group-title" style="color:#666; border-color:#666;">DEBUG / OTHER</div>
+
+        <div class="setting-row" style="display:none;">
+            <span style="color:#888">Developer Mode</span>
             <input type="checkbox" id="dev-mode-check">
         </div>
 
+        <div style="color:#666; font-size:12px; line-height:1.6; margin-top:10px;">
+            Tip: 使用 ASSIST（空格/方向键自动）会被视为辅助模式，默认不记录成绩与碎片奖励。
+        </div>
+        </div>
+
         <div style="text-align:center; margin-top:30px;">
-            <button class="main-btn" onclick="closeSettings()" style="padding:10px 40px; font-size:16px;">CLOSE</button>
+        <button class="main-btn" onclick="closeSettings()" style="padding:10px 40px; font-size:16px;">CLOSE</button>
         </div>
     </div>
 </div>
 
 <div id="update-modal" class="overlay" style="display:none; z-index: 100;">
     <div id="update-box">
-        <div class="update-header">System Update // V1.3.0_alpha</div>
+        <div class="update-header">System Update // V1.4.0_alpha</div>
         <div class="update-content">
-            <div class="update-list-item"><span class="update-tag">NEW</span><strong>新增功能：收件箱</strong><br><span style="color:#aaa;">在右上角新增了“收件箱”，听说N-07给你写了一封信，请务必看一下；</span></div>
-            <div class="update-list-item"><span class="update-tag">NEW</span><strong>新增bad判定</strong><br><span style="color:#aaa;">过关更容易了！</span></div>
-            <div class="update-list-item"><span class="update-tag">FIX</span><strong>修复</strong><br><span style="color:#aaa;">修复了一些播放音乐和音效的bug</span></div>
+            <div class="update-list-item"><span class="update-tag">FIX</span><strong>优化</strong><br><span style="color:#aaa;">选项菜单布局</span></div>
+            <div class="update-list-item"><span class="update-tag">NEW</span><strong>音量设置</strong><br><span style="color:#aaa;">可以在选项菜单中设置音效与音乐的音量大小</span></div>
+            <div class="update-list-item"><span class="update-tag">NEW</span><strong>立绘系统</strong><br><span style="color:#aaa;">在游戏过程中可以设置N-07立绘与样式</span></div>
+            <div class="update-list-item"><span class="update-tag">NEW</span><strong>辅助演奏功能</strong><br><span style="color:#aaa;">N-07可以在演出过程中帮助你演奏一些音符（不知道她为什么会这样做……）</span></div>
+            <div class="update-list-item"><span class="update-tag">NEW</span><strong>档案室</strong><br><span style="color:#aaa;">你可以查看更多的关于N-07的背景与立绘（也许你会发现一些她的经历）</span></div>
         </div>
         <div style="text-align: center;"><button class="main-btn" onclick="closeUpdateModal()">CONFIRM</button></div>
     </div>
 </div>
 
 <div id="song-select-screen" class="overlay" style="display: none;">
-    <!-- 【NEW】收件箱按钮 -->
+    <!-- 碎片展示 -->
+    <div id="main-fragment-display">
+        <div class="fragment-icon"></div>
+        <span id="fragment-count-display">0</span>
+    </div>
+
+    <!-- 收藏按钮 -->
+    <button id="collection-btn" onclick="openCollection()">
+        <span style="font-size:20px;">📂</span> 档案室
+    </button>
+    
+    <!-- 收件箱按钮 -->
     <button id="mailbox-btn" onclick="openMailbox()">
         <span style="font-size:20px;">📩</span> 邮件
         <div id="mail-notification" class="badge-notification"></div>
@@ -638,12 +947,17 @@
         <h2 style="color:#aaa; letter-spacing:5px; margin:0;">RESULT</h2>
         <div id="res-grade" class="grade-big">S</div>
         <div id="res-score" style="font-size:40px; font-family:monospace;">0000000</div>
+
+        <!-- 结算碎片显示 -->
+        <div style="margin-top:5px; margin-bottom:10px; font-family:monospace; color:#aa00ff; font-weight:bold; font-size:18px;">
+            FRAGMENTS GET: +<span id="res-fragments-earned">0</span>
+        </div>
+
         <div id="failed-msg" class="failed-text">CHALLENGE FAILED</div>
         <div class="stat-grid">
             <div class="stat-row" style="color:#ff00ff"><span class="stat-label">CRITICAL</span><span class="stat-val" id="res-crit">0</span></div>
             <div class="stat-row" style="color:#ffffff"><span class="stat-label">PERFECT</span><span class="stat-val" id="res-perf">0</span></div>
             <div class="stat-row" style="color:#ffcc00"><span class="stat-label">GOOD</span><span class="stat-val" id="res-good">0</span></div>
-            <!-- 【NEW】新增 BAD 统计行 -->
             <div class="stat-row" style="color:#a300cc"><span class="stat-label">BAD</span><span class="stat-val" id="res-bad">0</span></div>
             <div class="stat-row" style="color:#ff0055"><span class="stat-label">MISS</span><span class="stat-val" id="res-miss">0</span></div>
             <div style="height:1px; background:#444; margin:5px 0;"></div>
@@ -660,6 +974,19 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     
+    // --- 立绘资源配置 ---
+    // 请在此处修改你的立绘图片路径
+    const CHAR_LIST = [
+        { id: 'nana', name: 'Nana (Default)', src: 'nana/cover.png' }, // 默认角色
+        { id: '温柔屏障', name: '温柔屏障', src: 'nana/1.png' }, // 示例：机器人角色（需替换为真实路径）
+        { id: '情感洪流', name: '情感洪流', src: 'nana/2.png' },   // 示例：其他角色（需替换为真实路径）
+        { id: '你的呼唤', name: '你的呼唤', src: 'nana/3.png' },
+        { id: '音韵律动', name: '音韵律动', src: 'nana/5.png' }
+    ];
+    
+    // 当开启“空格自动”时，强制切换到的特殊立绘（例如机甲形态或辅助机器人）
+    // const AUTO_SPACE_CHAR_SRC = 'nana/3.png'; // (需替换为真实路径)
+
     let audioCtx, bgmSource, previewSource;
     let soundPackConfig = [];       
     let loadedBuffers = {};         
@@ -670,6 +997,25 @@
     let currentTag = 'ALL', selectedDiff = 'normal';
     
     let previewRequestId = 0;
+
+    // 调整音量大小
+    let bgmGainNode = null;
+    let sfxGainNode = null;
+
+    function ensureGains() {
+    if (!audioCtx) return;
+    if (!bgmGainNode) {
+        bgmGainNode = audioCtx.createGain();
+        bgmGainNode.connect(audioCtx.destination);
+    }
+    if (!sfxGainNode) {
+        sfxGainNode = audioCtx.createGain();
+        sfxGainNode.connect(audioCtx.destination);
+    }
+    bgmGainNode.gain.value = clamp01(userSettings.bgmVolume);
+    sfxGainNode.gain.value = clamp01(userSettings.sfxVolume);
+    }
+    function clamp01(v){ v = Number(v); if (isNaN(v)) return 0.8; return Math.max(0, Math.min(1, v)); }
 
     const CLEAR_THRESHOLDS = {
         'easy': 600000,
@@ -685,7 +1031,18 @@
         devMode: false,
         autoMode: false,
         hitSound: true,       
-        hitSoundPack: 'mp3'   
+        hitSoundPack: 'mp3',
+
+        // NEW: 音量设置（0~1）
+        bgmVolume: 0.8,
+        sfxVolume: 0.8,
+
+        // 新增设置
+        autoSpace: false, 
+        selectedChar: 'nana',
+
+        // NEW: 方向键自动演奏
+        autoArrows: { up:false, right:false, down:false, left:false }
     };
 
     let isPlaying = false, isPaused = false, isCountingDown = false;
@@ -711,9 +1068,272 @@
     const JUDGE_BAD = 0.32;
     const JUDGE_TRAP = 0.35; 
 
-    // --- 【NEW】收件箱逻辑系统 ---
+    // --- 收藏系统逻辑 ---
+    let COLLECTION_DATA = { story: [], gallery: [] }; 
+
+    async function initCollectionSystem() {
+        try {
+            const response = await fetch('collection.json?v=' + new Date().getTime());
+            if (response.ok) {
+                COLLECTION_DATA = await response.json();
+                console.log("Collection data loaded successfully.");
+            } else {
+                console.warn("collection.json not found, using empty default.");
+            }
+        } catch (e) {
+            console.error("Error loading collection.json:", e);
+        }
+    }
+
+    let playerInventory = {
+        fragments: 0,
+        unlockedItems: ["s001","g001"] 
+    };
+
+    function loadInventory() {
+        const saved = localStorage.getItem('neon_collection_v1');
+        if (saved) {
+            try {
+                playerInventory = JSON.parse(saved);
+                if(!playerInventory.unlockedItems) playerInventory.unlockedItems = ["s001"];
+            } catch(e) { console.error("Inventory Load Error", e); }
+        }
+        updateFragmentDisplay();
+    }
+
+    function saveInventory() {
+        localStorage.setItem('neon_collection_v1', JSON.stringify(playerInventory));
+        updateFragmentDisplay();
+    }
+
+    function updateFragmentDisplay() {
+        document.getElementById('fragment-count-display').innerText = playerInventory.fragments;
+        document.getElementById('col-panel-fragments').innerText = playerInventory.fragments;
+    }
+
+    let currentCollectionTab = 'story';
+    let selectedCollectionItem = null;
+
+    window.openCollection = function() {
+        document.getElementById('collection-overlay').style.display = 'flex';
+        switchCollectionTab('story');
+    };
+
+    window.closeCollection = function() {
+        document.getElementById('collection-overlay').style.display = 'none';
+    };
+
+    window.switchCollectionTab = function(tab) {
+        currentCollectionTab = tab;
+        document.querySelectorAll('.col-tab').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.col-tab[onclick="switchCollectionTab('${tab}')"]`).classList.add('active');
+        
+        renderCollectionList();
+        document.getElementById('collection-detail-container').innerHTML = '<div class="detail-placeholder">SELECT A FILE TO DECRYPT</div>';
+        selectedCollectionItem = null;
+    };
+
+    function renderCollectionList() {
+        const container = document.getElementById('collection-list-container');
+        container.innerHTML = '';
+        const list = COLLECTION_DATA[currentCollectionTab];
+
+        list.forEach(item => {
+            const isUnlocked = playerInventory.unlockedItems.includes(item.id);
+            const div = document.createElement('div');
+            div.className = `col-item-card ${isUnlocked ? '' : 'locked'}`;
+            div.innerHTML = `
+                <div class="col-item-info">
+                    <h4>${item.title}</h4>
+                    <p>${isUnlocked ? 'DECRYPTED' : 'ENCRYPTED'}</p>
+                </div>
+                ${!isUnlocked ? '<span class="lock-icon">🔒</span>' : ''}
+            `;
+            div.onclick = () => selectCollectionItem(item, div, isUnlocked);
+            container.appendChild(div);
+        });
+    }
+
+    async function selectCollectionItem(item, el, isUnlocked) {
+        document.querySelectorAll('.col-item-card').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        selectedCollectionItem = item;
+
+        const container = document.getElementById('collection-detail-container');
+        
+        if (isUnlocked) {
+            // 已解锁视图
+            if (item.type === 'story') {
+                // 【NEW】支持 .txt 文件读取
+                let contentHTML = '';
+                if (item.src && item.src.endsWith('.txt')) {
+                    container.innerHTML = `<div class="loading-spinner" style="width:30px;height:30px;"></div><p style="color:#888;">DECODING TEXT STREAM...</p>`;
+                    try {
+                        const res = await fetch(item.src);
+                        if(res.ok) {
+                            const text = await res.text();
+                            contentHTML = `<div class="detail-text">${text}</div>`;
+                        } else {
+                            contentHTML = `<div class="detail-text" style="color:#f05;">ERROR: Data Corrupted (404)</div>`;
+                        }
+                    } catch(e) {
+                        contentHTML = `<div class="detail-text" style="color:#f05;">ERROR: Data Corrupted (${e})</div>`;
+                    }
+                } else {
+                    // 兼容旧的直接内嵌 content 模式
+                    contentHTML = `<div class="detail-text">${item.content || 'No Data'}</div>`;
+                }
+
+                container.innerHTML = `
+                    <div class="detail-view">
+                        <div class="detail-title">${item.title}</div>
+                        ${contentHTML}
+                    </div>
+                `;
+            } else {
+                // 【NEW】图片支持点击放大
+                container.innerHTML = `
+                    <div class="detail-view" style="align-items:center;">
+                        <div class="detail-title">${item.title}</div>
+                        <img class="detail-image" src="${item.src}" alt="Art" onclick="openImageViewer('${item.src}')" title="Click to Expand">
+                        <div style="font-size:12px; color:#666;">CLICK IMAGE TO EXPAND</div>
+                    </div>
+                `;
+            }
+        } else {
+            // 未解锁视图
+            const canUnlock = playerInventory.fragments >= item.cost;
+            container.innerHTML = `
+                <div class="detail-view" style="justify-content:center; align-items:center; text-align:center;">
+                    <div style="font-size:60px; margin-bottom:20px;">🔒</div>
+                    <div class="detail-title">FILE ENCRYPTED</div>
+                    <p style="color:#888;">Spend Fragments to decrypt this file.</p>
+                    <div class="unlock-area">
+                        <span class="frag-cost">COST: ${item.cost} FRAGMENTS</span>
+                        <button class="unlock-btn" onclick="unlockCurrentItem()" ${canUnlock ? '' : 'disabled'}>
+                            ${canUnlock ? 'DECRYPT NOW' : 'INSUFFICIENT DATA'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // --- 图片查看器逻辑 (New) ---
+    // 状态变量：缩放比例、位移X、位移Y、是否拖拽中、上一次鼠标位置
+    let viewerState = {
+        scale: 1,
+        pX: 0,
+        pY: 0,
+        isDragging: false,
+        lastX: 0,
+        lastY: 0
+    };
+
+    function openImageViewer(src) {
+        const overlay = document.getElementById('image-viewer-overlay');
+        const img = document.getElementById('viewer-img');
+        
+        // 重置状态
+        viewerState = { scale: 1, pX: 0, pY: 0, isDragging: false, lastX: 0, lastY: 0 };
+        img.src = src;
+        updateViewerTransform();
+        
+        overlay.style.display = 'flex';
+        
+        // 绑定事件 (注意：为了防止重复绑定，这里使用了覆盖 on... 属性的方式，也可以用 add/removeEventListener)
+        
+        // 1. 滚轮缩放
+        overlay.onwheel = function(e) {
+            e.preventDefault();
+            // 滚轮向下(正)缩小，向上(负)放大
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            let newScale = viewerState.scale + delta;
+            
+            // 限制缩放范围 (0.2倍 到 5倍)
+            if (newScale < 0.2) newScale = 0.2;
+            if (newScale > 5.0) newScale = 5.0;
+            
+            viewerState.scale = newScale;
+            updateViewerTransform();
+        };
+
+        // 2. 鼠标按下开始拖拽
+        img.onmousedown = function(e) {
+            e.preventDefault(); // 防止浏览器默认拖拽图片行为
+            viewerState.isDragging = true;
+            viewerState.lastX = e.clientX;
+            viewerState.lastY = e.clientY;
+            img.style.cursor = 'grabbing';
+        };
+
+        // 3. 鼠标移动 (绑定在 document 上，防止鼠标移出图片范围导致断触)
+        document.onmousemove = function(e) {
+            if (!viewerState.isDragging) return;
+            e.preventDefault();
+
+            const deltaX = e.clientX - viewerState.lastX;
+            const deltaY = e.clientY - viewerState.lastY;
+
+            // 考虑缩放比例对移动速度的影响（可选，这里直接1:1移动更直观）
+            viewerState.pX += deltaX;
+            viewerState.pY += deltaY;
+
+            viewerState.lastX = e.clientX;
+            viewerState.lastY = e.clientY;
+
+            updateViewerTransform();
+        };
+
+        // 4. 鼠标松开
+        document.onmouseup = function() {
+            viewerState.isDragging = false;
+            img.style.cursor = 'grab';
+        };
+    }
+
+    function updateViewerTransform() {
+        const img = document.getElementById('viewer-img');
+        // 使用 translate 和 scale 组合变换
+        img.style.transform = `translate(${viewerState.pX}px, ${viewerState.pY}px) scale(${viewerState.scale})`;
+    }
+
+    function closeImageViewer() {
+        const overlay = document.getElementById('image-viewer-overlay');
+        overlay.style.display = 'none';
+        
+        // 清理事件防止内存泄漏或干扰其他功能
+        overlay.onwheel = null;
+        const img = document.getElementById('viewer-img');
+        img.onmousedown = null;
+        document.onmousemove = null;
+        document.onmouseup = null;
+    }
+
+    function downloadCurrentImage() {
+        const src = document.getElementById('viewer-img').src;
+        if(!src) return;
+        const a = document.createElement('a');
+        a.href = src;
+        a.download = 'neon_pulse_archive.png'; 
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    window.unlockCurrentItem = function() {
+        if (!selectedCollectionItem) return;
+        if (playerInventory.fragments >= selectedCollectionItem.cost) {
+            playerInventory.fragments -= selectedCollectionItem.cost;
+            playerInventory.unlockedItems.push(selectedCollectionItem.id);
+            saveInventory();
+            renderCollectionList();
+            switchCollectionTab(currentCollectionTab); // 刷新详情
+        }
+    };
+
+    // --- 收件箱逻辑系统 ---
     let mailData = [];
-    // 默认演示邮件，防止没有 mails.json 文件时报错
     const DEFAULT_MAILS = [
         {
             id: "system_welcome",
@@ -726,7 +1346,6 @@
 
     async function initMailSystem() {
         try {
-            // 尝试读取同级目录下的 mails.json 文件
             const response = await fetch('mails.json');
             if (response.ok) {
                 mailData = await response.json();
@@ -762,13 +1381,12 @@
 
     window.closeMailbox = function() {
         document.getElementById('mailbox-overlay').style.display = 'none';
-        checkUnreadMails(); // 关闭时刷新红点状态
+        checkUnreadMails(); 
     };
 
     function renderMailList() {
         const container = document.getElementById('mail-list-container');
         container.innerHTML = '';
-        
         const readList = JSON.parse(localStorage.getItem('neon_read_mails') || '[]');
 
         mailData.forEach((mail, index) => {
@@ -783,20 +1401,16 @@
             container.appendChild(div);
         });
 
-        // Reset view
         document.getElementById('mail-empty-state').style.display = 'flex';
         document.getElementById('mail-detail-view').style.display = 'none';
     }
 
     function selectMail(index, el) {
-        // UI 更新
         document.querySelectorAll('.mail-item').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
-        el.classList.remove('unread'); // 视觉上去掉未读标记
+        el.classList.remove('unread'); 
 
         const mail = mailData[index];
-        
-        // 显示内容
         document.getElementById('mail-empty-state').style.display = 'none';
         const detailView = document.getElementById('mail-detail-view');
         detailView.style.display = 'flex';
@@ -806,7 +1420,6 @@
         document.getElementById('mail-view-date').innerText = mail.date || "";
         document.getElementById('mail-view-content').innerHTML = mail.content;
 
-        // 标记为已读并保存
         const readList = JSON.parse(localStorage.getItem('neon_read_mails') || '[]');
         if (!readList.includes(mail.id)) {
             readList.push(mail.id);
@@ -834,9 +1447,9 @@
     }
 
     function saveRecord(songId, diff, score, clearType) {
-        if (userSettings.autoMode || userSettings.devMode) {
-            console.log("Auto/Dev mode active. Score not saved.");
-            return; 
+        if (userSettings.autoMode || userSettings.devMode || isAssistAutoActive()) {
+            console.log("Auto/Dev/Assist mode active. Score not saved.");
+            return;
         }
 
         const records = loadRecords();
@@ -844,12 +1457,10 @@
         const existing = records[key] || { score: 0, clearType: 0 };
 
         let shouldSave = false;
-
         if (score > existing.score) {
             existing.score = score;
             shouldSave = true;
         }
-
         if (clearType > existing.clearType) {
             existing.clearType = clearType;
             shouldSave = true;
@@ -872,29 +1483,15 @@
 
         if (rec) {
             scoreEl.innerText = rec.score.toString().padStart(7, '0');
-            
             badgeEl.className = 'record-badge';
             badgeEl.style.display = 'block';
 
             switch (rec.clearType) {
-                case CLEAR_TYPE.AC:
-                    badgeEl.innerText = "ALL CRITICAL";
-                    badgeEl.classList.add('badge-ac');
-                    break;
-                case CLEAR_TYPE.AP:
-                    badgeEl.innerText = "ALL PERFECT";
-                    badgeEl.classList.add('badge-ap');
-                    break;
-                case CLEAR_TYPE.FC:
-                    badgeEl.innerText = "FULL COMBO";
-                    badgeEl.classList.add('badge-fc');
-                    break;
-                case CLEAR_TYPE.CLEAR:
-                    badgeEl.innerText = "CLEAR";
-                    badgeEl.classList.add('badge-clear');
-                    break;
-                default:
-                    badgeEl.style.display = 'none';
+                case CLEAR_TYPE.AC: badgeEl.innerText = "ALL CRITICAL"; badgeEl.classList.add('badge-ac'); break;
+                case CLEAR_TYPE.AP: badgeEl.innerText = "ALL PERFECT"; badgeEl.classList.add('badge-ap'); break;
+                case CLEAR_TYPE.FC: badgeEl.innerText = "FULL COMBO"; badgeEl.classList.add('badge-fc'); break;
+                case CLEAR_TYPE.CLEAR: badgeEl.innerText = "CLEAR"; badgeEl.classList.add('badge-clear'); break;
+                default: badgeEl.style.display = 'none';
             }
         } else {
             scoreEl.innerText = "0000000";
@@ -960,12 +1557,7 @@
 
     async function loadSoundPack(packId) {
         if (!audioCtx) return;
-        
-        // 缓存检查：如果已经加载过，直接返回
-        if (loadedBuffers[packId] && loadedBuffers[packId].length > 0) {
-            return; 
-        }
-
+        if (loadedBuffers[packId] && loadedBuffers[packId].length > 0) return; 
         const pack = soundPackConfig.find(p => p.id === packId);
         if (!pack || pack.type === 'synth') return;
         
@@ -974,14 +1566,9 @@
                 const res = await fetch(url);
                 const buf = await res.arrayBuffer();
                 return await audioCtx.decodeAudioData(buf);
-            } catch (e) { 
-                console.warn("Failed to load hit sound:", url);
-                return null; 
-            }
+            } catch (e) { return null; }
         });
-
         const buffers = await Promise.all(promises);
-        // 过滤掉加载失败的 null
         loadedBuffers[packId] = buffers.filter(b => b !== null);
     }
 
@@ -1005,7 +1592,10 @@
     async function init() {
         loadSettings();
         await initSoundSystem();
-        initMailSystem(); // 【NEW】初始化邮件系统
+        initMailSystem();
+        loadInventory();
+
+        await initCollectionSystem();
 
         try {
             const res = await fetch('songs.json');
@@ -1055,8 +1645,81 @@
         soundCheck.checked = userSettings.hitSound !== false; 
         soundCheck.addEventListener('change', e => { userSettings.hitSound = e.target.checked; saveSettings(); });
 
+        // --- 新增设置项初始化 ---
+        const autoSpaceCheck = document.getElementById('auto-space-check');
+        autoSpaceCheck.checked = userSettings.autoSpace || false;
+        autoSpaceCheck.addEventListener('change', e => { userSettings.autoSpace = e.target.checked; saveSettings(); });
+
+        const charSelect = document.getElementById('character-select');
+        charSelect.innerHTML = '';
+        CHAR_LIST.forEach(char => {
+            const opt = document.createElement('option');
+            opt.value = char.id;
+            opt.innerText = char.name;
+            charSelect.appendChild(opt);
+        });
+        charSelect.value = userSettings.selectedChar || CHAR_LIST[0].id;
+        charSelect.addEventListener('change', e => { 
+            userSettings.selectedChar = e.target.value; 
+            saveSettings(); 
+        });
+
         document.getElementById('btn-start').onclick = startGame;
         checkUpdatePopup();
+
+        // --- 音量设置初始化 ---
+        const bgmVol = document.getElementById('bgm-vol-input');
+        const sfxVol = document.getElementById('sfx-vol-input');
+        bgmVol.value = clamp01(userSettings.bgmVolume);
+        sfxVol.value = clamp01(userSettings.sfxVolume);
+        document.getElementById('bgm-vol-val').innerText = Number(bgmVol.value).toFixed(2);
+        document.getElementById('sfx-vol-val').innerText = Number(sfxVol.value).toFixed(2);
+
+        bgmVol.addEventListener('input', e => {
+        userSettings.bgmVolume = clamp01(e.target.value);
+        document.getElementById('bgm-vol-val').innerText = userSettings.bgmVolume.toFixed(2);
+        saveSettings();
+        if (audioCtx) { ensureGains(); }
+        });
+        sfxVol.addEventListener('input', e => {
+        userSettings.sfxVolume = clamp01(e.target.value);
+        document.getElementById('sfx-vol-val').innerText = userSettings.sfxVolume.toFixed(2);
+        saveSettings();
+        if (audioCtx) { ensureGains(); }
+        });
+
+        // 方向自动演奏
+        const upChk = document.getElementById('auto-up-check');
+        const rightChk = document.getElementById('auto-right-check');
+        const downChk = document.getElementById('auto-down-check');
+        const leftChk = document.getElementById('auto-left-check');
+
+        upChk.checked = !!userSettings.autoArrows?.up;
+        rightChk.checked = !!userSettings.autoArrows?.right;
+        downChk.checked = !!userSettings.autoArrows?.down;
+        leftChk.checked = !!userSettings.autoArrows?.left;
+
+        function saveArrowAuto() {
+        if (!userSettings.autoArrows) userSettings.autoArrows = { up:false, right:false, down:false, left:false };
+        userSettings.autoArrows.up = upChk.checked;
+        userSettings.autoArrows.right = rightChk.checked;
+        userSettings.autoArrows.down = downChk.checked;
+        userSettings.autoArrows.left = leftChk.checked;
+        saveSettings();
+        }
+        upChk.addEventListener('change', saveArrowAuto);
+        rightChk.addEventListener('change', saveArrowAuto);
+        downChk.addEventListener('change', saveArrowAuto);
+        leftChk.addEventListener('change', saveArrowAuto);
+
+        initSettingsTabs();
+    }
+
+    // 判断是否辅助演奏
+    function isAssistAutoActive() {
+        const a = userSettings.autoArrows || {};
+        const arrowAutoOn = !!(a.up || a.right || a.down || a.left);
+        return !!(userSettings.autoSpace || arrowAutoOn);
     }
 
     function saveSettings() {
@@ -1081,6 +1744,23 @@
         hitBuffers = []; 
     }
 
+    function initSettingsTabs() {
+        const tabs = Array.from(document.querySelectorAll('.settings-tab'));
+        const sections = Array.from(document.querySelectorAll('.settings-section'));
+
+        function activate(tabName) {
+            tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+            sections.forEach(s => s.classList.toggle('active', s.dataset.section === tabName));
+        }
+
+        tabs.forEach(t => {
+            t.addEventListener('click', () => activate(t.dataset.tab));
+        });
+
+        // 默认页
+        activate('gameplay');
+    }
+
     function playHitSound(lane) {
         if (!userSettings.hitSound || !audioCtx) return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -1096,7 +1776,8 @@
             const gainNode = audioCtx.createGain();
             gainNode.gain.value = lane === 4 ? 0.8 : 0.6;
             source.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+            ensureGains();
+            gainNode.connect(sfxGainNode);
             source.start(0);
             return;
         }
@@ -1108,7 +1789,8 @@
             const gainNode = audioCtx.createGain();
             gainNode.gain.value = (lane === 4) ? 1.0 : 0.8; 
             source.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+            ensureGains();
+            gainNode.connect(sfxGainNode);
             source.start(0);
         }
     }
@@ -1223,35 +1905,24 @@
         document.getElementById('song-select-screen').style.display = 'none';
         
         try {
-            // 1. 准备加载任务列表
             const tasks = [];
-
-            // A. 任务：加载谱面和音乐
             if (currentSong.id === 'demo') {
-                // Demo 歌曲的特殊处理（生成模拟数据）
                 tasks.push(new Promise(async (resolve) => {
-                     await new Promise(r => setTimeout(r, 1000)); // 模拟加载延迟
+                     await new Promise(r => setTimeout(r, 1000));
                      const sr = audioCtx.sampleRate;
                      audioBuffer = audioCtx.createBuffer(1, sr * 30, sr);
-                     // 简单的生成静音或白噪作为Demo音频
                      const data = audioBuffer.getChannelData(0);
                      for(let i=0; i<data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.1;
-                     
                      notes = []; events = [{time:5, type:'shake'}, {time:10, type:'shake'}];
                      for(let i=0; i<30; i++) notes.push({time:2+i*0.8, lane:i%5, duration:i%4===0?1:0});
                      resolve();
                 }));
             } else {
-                // 正常歌曲：加入 Fetch 任务
                 const chartUrl = currentSong.charts[selectedDiff];
-                
-                // 任务：获取并解码歌曲音频
                 const audioTask = fetch(currentSong.audio)
                     .then(r => r.arrayBuffer())
                     .then(buffer => audioCtx.decodeAudioData(buffer))
                     .then(decoded => { audioBuffer = decoded; });
-                
-                // 任务：获取谱面JSON
                 const chartTask = fetch(chartUrl)
                     .then(r => r.json())
                     .then(data => {
@@ -1259,24 +1930,17 @@
                         events = data.events || [];
                         currentChartOffset = data.offset || 0;
                     });
-
                 tasks.push(audioTask);
                 tasks.push(chartTask);
             }
 
-            // B. 关键修复：加入音效加载任务
-            // 确保当前选择的音效包已加载。如果已加载，loadSoundPack 会直接返回（需要微调 loadSoundPack 逻辑或信任其缓存机制）
-            // 这里我们直接调用 loadSoundPack，因为它内部应该处理缓存检查
             const currentPackId = userSettings.hitSoundPack;
             if (currentPackId && currentPackId !== 'synth') {
-                // 如果缓存里没有这个包的数据，或者虽然有Key但数据为空，则强制等待加载
                 if (!loadedBuffers[currentPackId] || loadedBuffers[currentPackId].length === 0) {
                      document.getElementById('loading-text').innerText = "Downloading Sound Effects...";
                      tasks.push(loadSoundPack(currentPackId));
                 }
             }
-
-            // 2. 等待所有资源（音乐、谱面、音效）全部就绪
             await Promise.all(tasks);
 
         } catch(e) { 
@@ -1287,7 +1951,6 @@
             return; 
         }
 
-        // 所有数据准备完毕，进入游戏
         loadingOverlay.style.display = 'none';
         document.getElementById('hud').style.display = 'block';
         document.getElementById('bg-layer').style.opacity = 0.5;
@@ -1324,9 +1987,17 @@
         document.getElementById('score-display').innerText = "0000000";
         document.getElementById('combo-display').style.opacity = 0;
 
+        // --- 设置立绘图片 ---
+        const charImg = document.getElementById('ingame-char-img');
+        const selected = CHAR_LIST.find(c => c.id === userSettings.selectedChar) || CHAR_LIST[0];
+        charImg.src = selected.src;
+        charImg.style.filter = ""; // 重置滤镜
+        
+
+        ensureGains();
         bgmSource = audioCtx.createBufferSource();
         bgmSource.buffer = audioBuffer;
-        bgmSource.connect(audioCtx.destination);
+        bgmSource.connect(bgmGainNode);
         bgmSource.start(0);
         startTime = audioCtx.currentTime;
         isPlaying = true; isPaused = false; isCountingDown = false;
@@ -1361,25 +2032,65 @@
         document.getElementById('bg-layer').style.filter = `blur(8px) brightness(${0.5 + bgFlash})`;
         document.getElementById('progress-bar').style.width = ((rawTime/audioBuffer.duration)*100) + "%";
 
+        // --- 判定逻辑 ---
         notes.forEach(n => {
-            if (!n.processed && !n.headHit && now >= n.time && (userSettings.devMode || userSettings.autoMode)) {
-                n.headHit = true; createExplosion(n.lane); 
-                const hitType = userSettings.autoMode ? 'auto' : 'critical';
-                if (n.duration === 0) { n.processed = true; handleHit(hitType, n.lane); }
-                else { n.holding = true; handleHit(hitType, n.lane); }
+            // 全局自动(AutoMode) 或 开发者模式
+            const isGlobalAuto = (userSettings.devMode || userSettings.autoMode);
+            const a = userSettings.autoArrows || {};
+            const isArrowAutoLane =
+            (n.lane === 0 && a.up) ||
+            (n.lane === 1 && a.right) ||
+            (n.lane === 2 && a.down) ||
+            (n.lane === 3 && a.left);
+
+            const isSpaceAuto = (userSettings.autoSpace && n.lane === 4);
+            const isAssistAuto = isSpaceAuto || isArrowAutoLane;
+
+            // 自动点击判定条件
+            if (!n.processed && !n.headHit && now >= n.time && (isGlobalAuto || isAssistAuto)) {
+                n.headHit = true;
+                createExplosion(n.lane);
+
+                let hitType = 'perfect';
+                if (userSettings.autoMode || isAssistAuto) hitType='auto'; // 空格/方向键自动 = AUTO
+
+                if (n.duration === 0) {
+                    n.processed = true;
+                    handleHit(hitType, n.lane);
+                } else {
+                    n.holding = true;
+                    handleHit(hitType, n.lane);
+                }
             }
-            if (n.holding && now >= n.time + n.duration && (userSettings.devMode || userSettings.autoMode)) {
-                n.holding = false; n.processed = true; createExplosion(n.lane); handleHit(userSettings.autoMode ? 'auto' : 'critical', n.lane);
+
+            // 自动长按结束判定
+            if (n.holding && (isGlobalAuto || isAssistAuto) && now >= n.time + n.duration) {
+            n.holding = false;
+            n.processed = true;
+            createExplosion(n.lane);
+
+            let hitType = 'perfect';
+            if (userSettings.autoMode || isAssistAuto) hitType='auto';
+
+            handleHit(hitType, n.lane);
             }
+
         });
-        // 【MODIFIED】 这里的自动 Miss 判定时间要改成 JUDGE_BAD
-        // 只有当时间超过了 BAD 窗口，才算彻底错过
+
         notes.forEach(n => {
             if(n.processed) return;
-            if(!userSettings.devMode && !userSettings.autoMode) {
-                // 如果当前时间超过了 BAD 窗口，才判定为 MISS
+            
+            // 如果该音符是空格且开启了自动，不要让它判定为MISS
+            const a2 = userSettings.autoArrows || {};
+            const isAssist =
+            (userSettings.autoSpace && n.lane === 4) ||
+            (n.lane === 0 && a2.up) ||
+            (n.lane === 1 && a2.right) ||
+            (n.lane === 2 && a2.down) ||
+            (n.lane === 3 && a2.left);
+            
+            if(!userSettings.devMode && !userSettings.autoMode && !isAssist) {
                 if(!n.headHit && now > n.time + JUDGE_BAD) { n.processed = true; handleHit('miss', n.lane); }
-                // 长按尾部同理
                 if(n.holding && now > n.time + n.duration + JUDGE_BAD) { n.holding = false; n.processed = true; handleHit('miss', n.lane); }
             }
         });
@@ -1463,13 +2174,26 @@
     }
     window.addEventListener('keydown', e => {
         if(e.code === 'Escape') {
+            if(document.getElementById('image-viewer-overlay').style.display === 'flex') { closeImageViewer(); return; }
             if(document.getElementById('mailbox-overlay').style.display === 'flex') { closeMailbox(); return; }
             if(document.getElementById('settings-overlay').style.display === 'flex') { closeSettings(); return; }
             if(isPlaying) { if(isPaused) startResumeCountdown(); else pauseGame(); } return;
         }
         if (userSettings.devMode || userSettings.autoMode || !isPlaying || isPaused || isCountingDown || e.repeat) return;
+        
         const map = userSettings.inputMode === 'wasd' ? KEYS_MAP_WASD : KEYS_MAP_ARROW;
         const lane = map[e.code];
+
+        // 如果开启了Space自动，则禁用Space键的手动触发，防止冲突
+        const a = userSettings.autoArrows || {};
+        const isArrowAutoLane =
+        (lane === 0 && a.up) ||
+        (lane === 1 && a.right) ||
+        (lane === 2 && a.down) ||
+        (lane === 3 && a.left);
+
+        if ((userSettings.autoSpace && lane === 4) || isArrowAutoLane) return;
+
         if (lane !== undefined) {
             if(e.code==='Space') e.preventDefault();
             const rawTime = audioCtx.currentTime - startTime;
@@ -1478,7 +2202,6 @@
             if(note) {
                 const diff = note.time - now;
                 const absDiff = Math.abs(diff);
-                // 【MODIFIED】 判定逻辑增加 BAD
                 if (absDiff < JUDGE_GOOD) {
                     note.headHit = true;
                     let type = 'good'; 
@@ -1489,16 +2212,11 @@
                     else { note.processed = true; handleHit(type, lane); }
                     createExplosion(lane);
                 } else if (absDiff < JUDGE_BAD) {
-                    // 【NEW】 BAD 判定逻辑
-                    // 介于 GOOD 和 MISS 之间
                     note.headHit = true;
                     if(note.duration>0) { note.holding = true; handleHit('bad', lane); }
                     else { note.processed = true; handleHit('bad', lane); }
-                    // BAD 是否有打击特效？可以有，也可以没有，这里给个小反馈
                     createExplosion(lane); 
                 } else { 
-                    // 超过了 BAD 但在 TRAP 范围内 (太早按了或者太晚按了)
-                    // 原有逻辑是直接 MISS
                     note.processed = true; handleHit('miss', lane); 
                 }
             }
@@ -1508,6 +2226,17 @@
         if (userSettings.devMode || userSettings.autoMode || !isPlaying || isPaused || isCountingDown) return;
         const map = userSettings.inputMode === 'wasd' ? KEYS_MAP_WASD : KEYS_MAP_ARROW;
         const lane = map[e.code];
+
+        // 如果开启了Space自动，禁用Space的手动松开
+        const a = userSettings.autoArrows || {};
+        const isArrowAutoLane =
+        (lane === 0 && a.up) ||
+        (lane === 1 && a.right) ||
+        (lane === 2 && a.down) ||
+        (lane === 3 && a.left);
+
+        if ((userSettings.autoSpace && lane === 4) || isArrowAutoLane) return;
+
         if(lane!==undefined) {
             const rawTime = audioCtx.currentTime - startTime;
             const now = rawTime - (userSettings.offset / 1000);
@@ -1516,13 +2245,11 @@
                 note.holding = false; note.processed = true;
                 const diff = (note.time + note.duration) - now;
                 const absDiff = Math.abs(diff);
-                // 【MODIFIED】 长按松手判定增加 BAD
                 if(absDiff < JUDGE_GOOD) {
                     if(absDiff < JUDGE_CRITICAL) handleHit('critical', lane); 
                     else if(absDiff < JUDGE_PERFECT) handleHit('perfect', lane); 
                     else handleHit('good', lane);
                 } else if (absDiff < JUDGE_BAD) {
-                    // 【NEW】 长按松手 BAD
                     handleHit('bad', lane);
                 } else { 
                     handleHit('miss', lane); 
@@ -1531,7 +2258,6 @@
         }
     });
 
-    // 【MODIFIED】 核心处理函数：增加 bad 类型
     function handleHit(type, lane) {
         if (type !== 'miss') playHitSound(lane);
         
@@ -1541,27 +2267,17 @@
             stats.combo=0; stats.miss++; text="MISS"; color="#f05"; 
         } 
         else if (type === 'bad') {
-            // 【NEW】 BAD 的处理逻辑
-            stats.combo = 0; // BAD 断连击
-            stats.bad++;     // 计数增加
-            let val = totalScoreUnit * 0.2; // 分数给予 20%
-            text = "BAD";
-            color = "#a300cc"; // 紫色
-            stats.rawScore += val; 
-            stats.score = Math.min(1000000, Math.round(stats.rawScore));
+            stats.combo = 0; stats.bad++; let val = totalScoreUnit * 0.2; text = "BAD"; color = "#a300cc"; 
+            stats.rawScore += val; stats.score = Math.min(1000000, Math.round(stats.rawScore));
         }
         else {
             stats.combo++; 
             if(stats.combo > stats.maxCombo) stats.maxCombo = stats.combo;
-            
             let val=0;
             if (type === 'auto') { stats.auto++; val = totalScoreUnit; text = "AUTO"; color = "#00ccff"; }
             else if(type==='critical') { stats.critical++; val=totalScoreUnit; text="PERFECT"; isRainbow=true; }
             else if(type==='perfect') { stats.perfect++; val=totalScoreUnit; text="PERFECT"; }
-            else { 
-                // Good
-                stats.good++; val=totalScoreUnit*0.5; text="GOOD"; color="#fc0"; 
-            }
+            else { stats.good++; val=totalScoreUnit*0.5; text="GOOD"; color="#fc0"; }
             stats.rawScore += val; stats.score = Math.min(1000000, Math.round(stats.rawScore));
         }
         const cEl = document.getElementById('combo-display');
@@ -1593,10 +2309,29 @@
     function updateParticles() {
         for(let i=particles.length-1; i>=0; i--) {
             let p=particles[i];
-            if(p.type==='spark') {
-                p.x+=p.vx; p.y+=p.vy; p.life-=0.05;
-                ctx.globalAlpha=p.life; ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,4,4);
+            
+            if(p.type==='spark' || p.type==='firework') {
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                if(p.gravity) p.vy += p.gravity;
+                
+                // 增加空气阻力，让它炸开后迅速减速
+                p.vx *= 0.92; 
+                p.vy *= 0.92;
+
+                p.life -= p.decay || 0.05;
+
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.fillStyle = p.color;
+                
+                // [修改] 改为绘制圆形，视觉效果更柔和
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size || 3, 0, Math.PI * 2);
+                ctx.fill();
+                
             } else {
+                // 文字渲染保持不变
                 p.y-=2; p.life-=0.02; ctx.globalAlpha=Math.max(0,p.life);
                 ctx.font="900 24px Arial"; ctx.textAlign="center";
                 if(p.isRainbow) {
@@ -1638,28 +2373,30 @@
     };
 
     window.backToMenu = function() {
-        // 1. 停止播放
+        // [新增] 清理烟花定时器和粒子
+        if (fireworkTimer) { clearInterval(fireworkTimer); fireworkTimer = null; }
+        particles = []; 
+        // resultRenderLoop 会因为 display 不为 flex 而自动停止绘制，但清空 particles 很重要
+
         if(bgmSource) {
             try{ bgmSource.stop(); } catch(e){}
-            bgmSource.disconnect(); // 断开连接
+            bgmSource.disconnect();
             bgmSource = null;
         }
 
-        // 2. 清理当前歌曲的大型资源 (内存优化)
+        if(bgmSource) {
+            try{ bgmSource.stop(); } catch(e){}
+            bgmSource.disconnect();
+            bgmSource = null;
+        }
         audioBuffer = null; 
         notes = [];
         events = [];
         particles = [];
-
-        // 注意：我们通常 *不* 删除 loadedBuffers (打击音效)，
-        // 因为下次进游戏还需要用，重新下载会变慢。
-        // 如果你必须强制清理所有缓存（例如为了内存极度紧张的设备），取消下面注释：
-        // loadedBuffers = {}; 
         
         isPlaying = false;
         cancelAnimationFrame(animationFrameId);
         
-        // 3. UI 恢复
         document.getElementById('pause-menu').style.display='none';
         document.getElementById('hud').style.display='none';
         document.getElementById('result-screen').style.display='none';
@@ -1669,41 +2406,148 @@
         document.getElementById('bg-layer').style.opacity = 0.5;
         document.getElementById('bg-layer').style.filter = "blur(8px) brightness(0.5)";
         
-        // 4. 恢复预览
         previewRequestId++;
         updateRecordDisplay(); 
         if(currentSong) playPreview(currentSong, previewRequestId);
     };
 
-    // 【MODIFIED】 finishGame 需要显示 BAD 统计
+    // --- 烟花系统变量与函数 ---
+    let resultInterval = null;
+    let fireworkTimer = null;
+
+    // 结算界面专用的渲染循环
+    function resultRenderLoop() {
+        if(document.getElementById('result-screen').style.display !== 'flex') return;
+        
+        // 1. 正常绘制半透明黑色背景 (用来遮住游戏画面，突出烟花)
+        // 必须先设置为 source-over，否则背景无法正确覆盖
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 2. [核心修改] 开启“变亮”混合模式
+        // 这会让烟花粒子在深色背景上发光，并且重叠处更亮
+        ctx.globalCompositeOperation = 'lighter';
+        
+        // 3. 绘制粒子
+        updateParticles();
+        
+        // 4. 恢复默认模式，以免影响下一次循环的背景绘制
+        ctx.globalCompositeOperation = 'source-over';
+        
+        requestAnimationFrame(resultRenderLoop);
+    }
+
+    // 生成烟花
+    function spawnFirework(type) {
+        // 让烟花位置稍微靠上一点，不要被分数板挡住太多
+        const x = Math.random() * canvas.width * 0.6 + canvas.width * 0.2;
+        const y = Math.random() * canvas.height * 0.4 + canvas.height * 0.1;
+        
+        const isRich = type === 'rich'; 
+        // [修改] 增加粒子数量：普通80个，绚丽200个
+        const particleCount = isRich ? 200 : 80; 
+        const baseColorHue = Math.random() * 360; 
+
+        for (let i = 0; i < particleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            // [修改] 提高速度范围，让爆炸范围更大
+            const speed = Math.random() * (isRich ? 12 : 8) + 2; 
+            
+            let color;
+            // [修改] 调整 HSL 亮度 (L) 从 50% 提高到 70%-80%，这样看起来更像“光”而不是“漆”
+            if (isRich) {
+                const hue = (baseColorHue + Math.random() * 60) % 360;
+                color = `hsl(${hue}, 100%, 75%)`; 
+            } else {
+                const hue = 30 + Math.random() * 30; // 金色
+                color = `hsl(${hue}, 100%, 70%)`;
+            }
+
+            particles.push({
+                x: x, y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                gravity: 0.1 + Math.random() * 0.05, // [修改] 稍微加重重力，下坠感更强
+                life: 1.2, // [修改] 稍微缩短寿命，配合高亮度
+                decay: Math.random() * 0.01 + 0.015,
+                color: color,
+                // [修改] 粒子变大：普通 3-6px，绚丽 4-9px
+                size: isRich ? Math.random() * 5 + 4 : Math.random() * 3 + 3,
+                type: 'firework'
+            });
+        }
+    }
+
+    // 启动烟花定时器
+    function startFireworkShow(type) {
+        console.log("启动烟花效果! 类型:", type); // 打开浏览器控制台(F12)看有没有这句话
+        
+        spawnFirework(type);
+        const interval = type === 'rich' ? 400 : 800;
+        
+        if (fireworkTimer) clearInterval(fireworkTimer);
+        fireworkTimer = setInterval(() => {
+            spawnFirework(type);
+        }, interval);
+    }
+
     function finishGame() {
         isPlaying = false;
         cancelAnimationFrame(animationFrameId);
-        document.getElementById('hud').style.display='none';
-        document.getElementById('result-screen').style.display='flex';
+        
+        // 隐藏HUD，显示结算界面
+        document.getElementById('hud').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'flex';
         
         const scoreEl = document.getElementById('res-score');
         const newRecordBadge = document.getElementById('new-record-badge');
         
         newRecordBadge.style.display = 'none';
 
+        // 设置分数显示
         if (userSettings.autoMode) {
-            scoreEl.innerText = "AUTO"; scoreEl.style.color = "#00ccff";
+            scoreEl.innerText = "AUTO"; 
+            scoreEl.style.color = "#00ccff";
         } else {
-            scoreEl.innerText = stats.score; scoreEl.style.color = "#fff";
+            scoreEl.innerText = stats.score.toString().padStart(7, '0'); 
+            scoreEl.style.color = "#fff";
         }
 
+        // 设置详细数据
         document.getElementById('res-crit').innerText = userSettings.autoMode ? stats.auto : stats.critical;
         document.getElementById('res-perf').innerText = stats.perfect;
         document.getElementById('res-good').innerText = stats.good;
-        // 【NEW】 显示 Bad 数量
         document.getElementById('res-bad').innerText = stats.bad;
         document.getElementById('res-miss').innerText = stats.miss;
         document.getElementById('res-maxcombo').innerText = stats.maxCombo;
 
-        const msg = document.getElementById('failed-msg');
-        const threshold = CLEAR_THRESHOLDS[selectedDiff];
+        // 计算碎片奖励
+        let fragmentsEarned = 0;
+        if (!userSettings.autoMode && !userSettings.devMode && !isAssistAutoActive()) {
+            if (stats.score >= 950000) fragmentsEarned = 50;
+            else if (stats.score >= 900000) fragmentsEarned = 40;
+            else if (stats.score >= 800000) fragmentsEarned = 30;
+            else if (stats.score >= 600000) fragmentsEarned = 10;
+            else fragmentsEarned = 5;
+            
+            if(selectedDiff === 'hard') fragmentsEarned = Math.floor(fragmentsEarned * 1.2);
+            if(selectedDiff === 'expert') fragmentsEarned = Math.floor(fragmentsEarned * 1.5);
+            
+            if(stats.miss===0 && stats.bad===0) fragmentsEarned += 10;
+            if(stats.good===0 && stats.miss===0 && stats.bad===0) fragmentsEarned += 20;
+
+            playerInventory.fragments += fragmentsEarned;
+            saveInventory();
+        } else {
+            fragmentsEarned = 0;
+        }
+        document.getElementById('res-fragments-earned').innerText = fragmentsEarned;
+
+        // 判断是否 Clear
+        const threshold = CLEAR_THRESHOLDS[selectedDiff] || 600000;
         let isCleared = stats.score >= threshold;
+        const msg = document.getElementById('failed-msg');
 
         if (!isCleared && !userSettings.autoMode) {
             msg.innerText = "CHALLENGE FAILED"; msg.style.display = 'block';
@@ -1711,38 +2555,45 @@
             msg.style.display = 'none';
         }
         
+        // --- 印章 (Stamp) 与 烟花判定逻辑 ---
         const area = document.getElementById('stamp-area');
-        area.innerHTML = '';
-        const d = document.createElement('div');
+        area.innerHTML = ''; // 清空之前的印章
+        const d = document.createElement('div'); // 创建新印章元素
 
         let clearType = CLEAR_TYPE.NONE;
         if (isCleared) clearType = CLEAR_TYPE.CLEAR;
 
         if (userSettings.autoMode) {
-            d.innerText = "AUTO MODE"; d.className = "stamp-auto"; area.appendChild(d);
+            d.innerText = "AUTO MODE"; 
+            d.className = "stamp-auto"; 
+            area.appendChild(d); // 必须添加进 DOM
         } else {
-            // 【MODIFIED】 修改 Full Combo 的判定条件
-            // 只有 Miss 和 Bad 都是 0 时，才算 FC
+            // 判定 AC / AP / FC
             if(stats.miss === 0 && stats.bad === 0) {
                 if (stats.good === 0 && stats.perfect === 0) {
+                    // All Critical
                     d.innerText = "ALL CRITICAL"; 
                     d.className = "stamp-critical";
                     clearType = CLEAR_TYPE.AC;
                 } else {
                     d.className = "stamp-normal";
                     if (stats.good === 0) {
+                        // All Perfect
                         d.innerText = "ALL PERFECT"; 
                         d.style.color = "#0ff";
                         clearType = CLEAR_TYPE.AP;
                     } else {
+                        // Full Combo
                         d.innerText = "FULL COMBO"; 
                         d.style.color = "#fc0";
                         clearType = CLEAR_TYPE.FC;
                     }
                 }
+                // 【关键修复】确保印章被添加到页面上
                 area.appendChild(d);
             }
 
+            // 保存记录逻辑
             const currentKey = `${currentSong.id}_${selectedDiff}`;
             const savedData = loadRecords()[currentKey];
             const oldScore = savedData ? savedData.score : 0;
@@ -1750,10 +2601,10 @@
             if (stats.score > oldScore) {
                 newRecordBadge.style.display = 'block'; 
             }
-
             saveRecord(currentSong.id, selectedDiff, stats.score, clearType);
         }
         
+        // 设置评级 (S, A, B...)
         let grade='F', color='#888';
         if(stats.score>=950000) { grade='S'; color='#d600ff'; }
         else if(stats.score>=900000) { grade='A'; color='#0ff'; }
@@ -1761,10 +2612,24 @@
         else if(stats.score>=600000) { grade='C'; color='#ff0'; }
         
         const gEl = document.getElementById('res-grade');
-        gEl.innerText = grade; gEl.style.color = color;
+        gEl.innerText = grade; 
+        gEl.style.color = color;
+
+        // --- 触发烟花逻辑 ---
+        // 1. 启动结算界面的 Canvas 渲染循环
+        resultRenderLoop();
+
+        // 2. 只有非自动模式且达成 FC/AP/AC 时才放烟花
+        if (!userSettings.autoMode && !isAssistAutoActive()) {
+            if (clearType === CLEAR_TYPE.AC || clearType === CLEAR_TYPE.AP) {
+                startFireworkShow('rich'); // 绚丽烟花
+            } else if (clearType === CLEAR_TYPE.FC) {
+                startFireworkShow('normal'); // 普通烟花
+            }
+        }
     }
 
-    const CURRENT_VERSION_KEY = 'V1.3.0_alpha';
+    const CURRENT_VERSION_KEY = 'V1.4.0_alpha';
     function checkUpdatePopup() { if (!localStorage.getItem(CURRENT_VERSION_KEY)) document.getElementById('update-modal').style.display = 'flex'; }
     window.closeUpdateModal = function() {
         document.getElementById('update-modal').style.display = 'none';
