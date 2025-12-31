@@ -23,7 +23,7 @@
     "tags": ["BanG Dream!", "Official"],
     "cover": "assets/FIRE BIRD.png",
     "audio": "assets/FIRE BIRD.mp3",
-    "preview_start": 15,
+    "preview_start": 85,
     "charts": {
       "easy": "assets/FIRE BIRD_easy.json",
       "normal": null,
@@ -109,6 +109,70 @@
       "normal": null,
       "hard": null,
       "expert":"assets/青空のラプソディ/expert.json"
+    }
+  },
+  {
+    "id": "パッパレ☆人生！バーン万歳！",
+    "title": "パッパレ☆人生！バーン万歳！",
+    "artist": "Pastel * Palettes",
+    "charter": "Nana_Chan",
+    "tags": ["BanG Dream!", "Official"],
+    "cover": "assets/パッパレ☆人生！バーン万歳！/cover.png",
+    "audio": "assets/パッパレ☆人生！バーン万歳！/song.mp3",
+    "preview_start": 57,
+    "charts": {
+      "easy": null,
+      "normal": "assets/パッパレ☆人生！バーン万歳！/normal.json",
+      "hard": "assets/パッパレ☆人生！バーン万歳！/hard.json",
+      "expert":"assets/パッパレ☆人生！バーン万歳！/expert.json"
+    }
+  },
+  {
+    "id": "Synchrogazer",
+    "title": "Synchrogazer",
+    "artist": "Photon Maiden",
+    "charter": "Nana_Chan",
+    "tags": ["Animate", "D4DJ", "Official"],
+    "cover": "assets/Synchrogazer/cover.png",
+    "audio": "assets/Synchrogazer/song.ogg",
+    "preview_start": 63,
+    "charts": {
+      "easy": "assets/Synchrogazer/easy.json",
+      "normal": "assets/Synchrogazer/normal.json",
+      "hard": "assets/Synchrogazer/hard.json",
+      "expert":"assets/Synchrogazer/expert.json"
+    }
+  },
+  {
+    "id": "BAD CANDY",
+    "title": "BAD CANDY",
+    "artist": "yukaDD",
+    "charter": "Nana_Chan",
+    "tags": ["Animate", "Official"],
+    "cover": "assets/BAD CANDY/cover.png",
+    "audio": "assets/BAD CANDY/song.mp3",
+    "preview_start": 42,
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert":"assets/BAD CANDY/expert.json"
+    }
+  },
+  {
+    "id": "ロキ（FULL）",
+    "title": "ロキ（FULL）",
+    "artist": "Leo/need",
+    "charter": "Nana_Chan",
+    "tags": ["Project Sekai", "VOCALOID", "Official"],
+    "cover": "assets/ロキ（FULL）/cover.png",
+    "audio": "assets/ロキ（FULL）/song.mp3",
+    "preview_start": 59.5,
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert":"assets/ロキ（FULL）/expert.json"
     }
   }
 ]

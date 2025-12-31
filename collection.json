@@ -122,6 +122,13 @@
       "src": "nana/5.png"
     },
     {
+      "id":"g007",
+      "type": "gallery",
+      "title": "烟花与完美约定",
+      "cost": 0,
+      "src": "gallery/2.jpeg"
+    },
+    {
       "id": "g002",
       "type": "gallery",
       "title": "数据风暴中的节奏引导者",
