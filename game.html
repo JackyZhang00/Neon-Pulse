@@ -612,6 +612,19 @@
             position: relative;
         }
 
+        /* 副标题样式 */
+        #preview-subtitle {
+            font-size: 16px;
+            color: #aaa;
+            opacity: 0.75;
+            letter-spacing: 2px;
+            margin-top: 4px;
+
+            font-family: monospace;
+            text-transform: uppercase;
+
+            text-shadow: 0 0 6px rgba(0, 255, 255, 0.35);
+        }
     </style>
 </head>
 <body>
@@ -880,13 +893,10 @@
 
 <div id="update-modal" class="overlay" style="display:none; z-index: 100;">
     <div id="update-box">
-        <div class="update-header">System Update // V1.4.0_alpha</div>
+        <div class="update-header">System Update // V1.5.0_alpha</div>
         <div class="update-content">
-            <div class="update-list-item"><span class="update-tag">FIX</span><strong>优化</strong><br><span style="color:#aaa;">选项菜单布局</span></div>
-            <div class="update-list-item"><span class="update-tag">NEW</span><strong>音量设置</strong><br><span style="color:#aaa;">可以在选项菜单中设置音效与音乐的音量大小</span></div>
-            <div class="update-list-item"><span class="update-tag">NEW</span><strong>立绘系统</strong><br><span style="color:#aaa;">在游戏过程中可以设置N-07立绘与样式</span></div>
-            <div class="update-list-item"><span class="update-tag">NEW</span><strong>辅助演奏功能</strong><br><span style="color:#aaa;">N-07可以在演出过程中帮助你演奏一些音符（不知道她为什么会这样做……）</span></div>
-            <div class="update-list-item"><span class="update-tag">NEW</span><strong>档案室</strong><br><span style="color:#aaa;">你可以查看更多的关于N-07的背景与立绘（也许你会发现一些她的经历）</span></div>
+            <div class="update-list-item"><span class="update-tag">NEW</span><strong>星级系统</strong><br><span style="color:#aaa;">为每个谱面计算了具体的星级，详细说明请查看收件箱</span></div>
+            <div class="update-list-item"><span class="update-tag">NEW</span><strong>副标题</strong><br><span style="color:#aaa;">有些额外的歌曲信息可能在副标题栏说明</span></div>
         </div>
         <div style="text-align: center;"><button class="main-btn" onclick="closeUpdateModal()">CONFIRM</button></div>
     </div>
@@ -983,9 +993,6 @@
         { id: '你的呼唤', name: '你的呼唤', src: 'nana/3.png' },
         { id: '音韵律动', name: '音韵律动', src: 'nana/5.png' }
     ];
-    
-    // 当开启“空格自动”时，强制切换到的特殊立绘（例如机甲形态或辅助机器人）
-    // const AUTO_SPACE_CHAR_SRC = 'nana/3.png'; // (需替换为真实路径)
 
     let audioCtx, bgmSource, previewSource;
     let soundPackConfig = [];       
@@ -995,6 +1002,14 @@
     let currentChartOffset = 0; 
     let songList = [], filteredList = [];
     let currentTag = 'ALL', selectedDiff = 'normal';
+
+    // ===== 难度星级上限 =====
+    const DIFF_MAX_STARS = {
+        easy: 5,
+        normal: 7,
+        hard: 8,
+        expert: 10
+    };
     
     let previewRequestId = 0;
 
@@ -1331,6 +1346,38 @@
             switchCollectionTab(currentCollectionTab); // 刷新详情
         }
     };
+
+    // 星级显示
+    function renderDifficultyStars(song, diff) {
+        const containerId = 'diff-star-display';
+        let el = document.getElementById(containerId);
+
+        if (!el) {
+            el = document.createElement('div');
+            el.id = containerId;
+            el.style.fontSize = '20px';
+            el.style.color = '#ffd700';
+            el.style.marginTop = '4px';
+            document.getElementById('preview-title').after(el);
+        }
+
+        const lv = song?.levels?.[diff];
+        const max = DIFF_MAX_STARS[diff];
+
+        if (!lv || !max) {
+            el.style.display = 'none';
+            return;
+        }
+
+        let stars = '';
+        for (let i = 1; i <= 10; i++) {
+            stars += i <= lv ? '★' : '☆';
+        }
+
+        el.innerText = `  ${stars}`;
+        el.style.display = 'block';
+    }
+
 
     // --- 收件箱逻辑系统 ---
     let mailData = [];
@@ -1841,7 +1888,23 @@
 
         previewRequestId++;
 
-        document.getElementById('preview-title').innerText = currentSong.title;
+        const titleEl = document.getElementById('preview-title');
+        titleEl.innerText = currentSong.title;
+        // 副标题显示
+        let subEl = document.getElementById('preview-subtitle');
+        if (!subEl) {
+            subEl = document.createElement('div');
+            subEl.id = 'preview-subtitle';
+            titleEl.after(subEl);
+        }
+
+        if (currentSong.subtitle && currentSong.subtitle.trim() !== '') {
+            subEl.innerText = currentSong.subtitle;
+            subEl.style.display = 'block';
+        } else {
+            subEl.style.display = 'none';
+        }
+
         document.getElementById('preview-artist').innerText = currentSong.artist;
         document.getElementById('preview-charter').innerText = "Charter: " + (currentSong.charter||"?");
         document.getElementById('preview-cover').src = currentSong.cover||'';
@@ -1872,6 +1935,9 @@
                 btn.classList.add('active');
             }
         });
+
+        // ★ 新增：更新星级显示
+        if (currentSong) renderDifficultyStars(currentSong, selectedDiff);
     }
 
     async function playPreview(song, reqId) {
@@ -2629,7 +2695,7 @@
         }
     }
 
-    const CURRENT_VERSION_KEY = 'V1.4.0_alpha';
+    const CURRENT_VERSION_KEY = 'V1.5.0_alpha';
     function checkUpdatePopup() { if (!localStorage.getItem(CURRENT_VERSION_KEY)) document.getElementById('update-modal').style.display = 'flex'; }
     window.closeUpdateModal = function() {
         document.getElementById('update-modal').style.display = 'none';
