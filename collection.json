@@ -125,8 +125,15 @@
       "id":"g007",
       "type": "gallery",
       "title": "烟花与完美约定",
-      "cost": 0,
+      "cost": 220,
       "src": "gallery/2.jpeg"
+    },
+    {
+      "id":"g008",
+      "type": "gallery",
+      "title": "除夕的团圆饭",
+      "cost": 0,
+      "src": "gallery/3.jpeg"
     },
     {
       "id": "g002",
