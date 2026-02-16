@@ -245,5 +245,27 @@
       "hard": null,
       "expert":"assets/ロキ（FULL）/expert.json"
     }
+  },
+  {
+    "id": "ベノム",
+    "title": "ベノム",
+    "artist": "25時、ナイトコードで。",
+    "charter": "Nana_Chan",
+    "tags": ["Project Sekai", "VOCALOID", "Official"],
+    "cover": "assets/ベノム/cover.png",
+    "audio": "assets/ベノム/song.mp3",
+    "preview_start": 54,
+    "levels": {
+      "easy": 3,
+      "normal": 5,
+      "hard": 4,
+      "expert": 8
+    },
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert": "assets/ベノム/expert.json"
+    }
   }
 ]
