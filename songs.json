@@ -267,5 +267,49 @@
       "hard": null,
       "expert": "assets/ベノム/expert.json"
     }
+  },
+  {
+    "id": "転生林檎",
+    "title": "転生林檎",
+    "artist": "Roselia×＋α／あるふぁきゅん。",
+    "charter": "Nana_Chan",
+    "tags": ["BanG Dream!", "VOCALOID", "Official"],
+    "cover": "assets/転生林檎/cover.png",
+    "audio": "assets/転生林檎/song.mp3",
+    "preview_start": 73,
+    "levels": {
+      "easy": 3,
+      "normal": 5,
+      "hard": 4,
+      "expert": 8
+    },
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert": "assets/転生林檎/expert.json"
+    }
+  },
+  {
+    "id": "Requiem for Fate",
+    "title": "Requiem for Fate",
+    "artist": "Roselia",
+    "charter": "Nana_Chan",
+    "tags": ["BanG Dream!", "Official"],
+    "cover": "assets/Requiem for Fate/cover.png",
+    "audio": "assets/Requiem for Fate/song.mp3",
+    "preview_start": 70,
+    "levels": {
+      "easy": 3,
+      "normal": 5,
+      "hard": 4,
+      "expert": 10
+    },
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert": "assets/Requiem for Fate/expert.json"
+    }
   }
 ]
