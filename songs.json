@@ -301,14 +301,14 @@
     "preview_start": 70,
     "levels": {
       "easy": 3,
-      "normal": 5,
-      "hard": 4,
+      "normal": 6,
+      "hard": 8,
       "expert": 10
     },
     "charts": {
       "easy": null,
-      "normal": null,
-      "hard": null,
+      "normal": "assets/Requiem for Fate/normal.json",
+      "hard": "assets/Requiem for Fate/hard.json",
       "expert": "assets/Requiem for Fate/expert.json"
     }
   }
