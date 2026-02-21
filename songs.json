@@ -311,5 +311,27 @@
       "hard": "assets/Requiem for Fate/hard.json",
       "expert": "assets/Requiem for Fate/expert.json"
     }
+  },
+  {
+    "id": "闇の魔法少女",
+    "title": "闇の魔法少女",
+    "artist": "Silver Forest",
+    "charter": "Nana_Chan",
+    "tags": ["太鼓达人", "Official"],
+    "cover": "assets/闇の魔法少女/cover.png",
+    "audio": "assets/闇の魔法少女/song.mp3",
+    "preview_start": 2,
+    "levels": {
+      "easy": 3,
+      "normal": 6,
+      "hard": 8,
+      "expert": 9
+    },
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert": "assets/闇の魔法少女/expert.json"
+    }
   }
 ]
