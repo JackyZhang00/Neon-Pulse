@@ -1072,9 +1072,11 @@
     
     let hitBuffers = []; 
 
+    //0 上 1 右 2 下 3 左 4 空格
     const LANE_COLORS = ['#ff0055', '#00ffaa', '#00ccff', '#ffcc00', '#d600ff'];
-    const KEYS_MAP_ARROW = { 'ArrowUp': 0, 'ArrowRight': 1, 'ArrowDown': 2, 'ArrowLeft': 3, 'Space': 4 };
+    const KEYS_MAP_ARROW = { 'ArrowUp': 0, 'ArrowRight': 1, 'ArrowDown': 2, 'ArrowLeft': 3, 'Space': 4};
     const KEYS_MAP_WASD  = { 'KeyW': 0, 'KeyD': 1, 'KeyS': 2, 'KeyA': 3, 'Space': 4 };
+    // const KEYS_MAP_WASD  = { 'KeyA': 3, 'KeyS': 3, 'KeyD': 3, 'KeyF': 3, 'KeyJ': 1, 'KeyK': 1, 'KeyL': 1, 'KeyQ': 0, 'KeyW': 0, 'KeyE': 0,'KeyR': 0, 'KeyT': 0, 'KeyY': 0,'KeyU': 0, 'KeyI': 0, 'KeyO': 0, 'KeyP': 0, 'KeyZ': 2, 'KeyX': 2, 'KeyC': 2, 'KeyV': 2, 'KeyB': 2, 'KeyN': 2, 'KeyM': 2, 'Space': 4 };
     const HIT_RADIUS = 260;
     
     const JUDGE_CRITICAL = 0.04;
