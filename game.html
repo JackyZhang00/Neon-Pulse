@@ -264,6 +264,7 @@ canvas { display: block; position: relative; z-index: 1; }
 .card-diff-badge.normal { color:#00ff00; border-color:#00ff00; background:rgba(0,255,0,0.1); }
 .card-diff-badge.hard   { color:#ffcc00; border-color:#ffcc00; background:rgba(255,204,0,0.1); }
 .card-diff-badge.expert { color:#ff4444; border-color:#ff4444; background:rgba(255,68,68,0.1); }
+.card-diff-badge.master{color:#fff;border-color:#ff66ff;background:linear-gradient(90deg,#ff66ff,#8a5cff,#00ccff);box-shadow:0 0 15px #ff66ff;}
 
 /* 底部操作区 */
 .card-footer {
@@ -439,6 +440,42 @@ canvas { display: block; position: relative; z-index: 1; }
 .diff-btn[data-diff="normal"].active { background:#00ff00; border-color:#00ff00; box-shadow:0 0 15px #00ff00; color:#000; }
 .diff-btn[data-diff="hard"].active   { background:#ffcc00; border-color:#ffcc00; box-shadow:0 0 15px #ffcc00; color:#000; }
 .diff-btn[data-diff="expert"].active { background:#ff0000; border-color:#ff0000; box-shadow:0 0 15px #ff0000; color:#fff; }
+.diff-btn[data-diff="master"].active {background:linear-gradient(90deg,#ff66ff,#9d4dff,#00ccff);background-size:300% 300%;animation:masterGlow 2s linear infinite;border-color:#fff;color:#fff;box-shadow:0 0 20px #ff66ff;}
+@keyframes masterGlow{
+    0%{background-position:0% 50%;}
+    100%{background-position:100% 50%;}
+}
+.diff-btn[data-diff="master"]{
+    color:#ff66ff;
+    border-color:#ff66ff;
+}
+.diff-btn[data-diff="master"]:hover{
+    box-shadow:0 0 10px #ff66ff;
+}
+
+/* MASTER 教程按钮 */
+.master-tutorial-btn{
+    margin:0 0 10px 0;
+    background:linear-gradient(90deg,#ff66ff,#9d4dff,#00ccff,#ff66ff);
+    background-size:300% 300%;
+    animation:masterTutorialFlow 2s linear infinite;
+    border:1px solid #fff;
+    color:#fff;
+    padding:5px 20px;
+    border-radius:20px;
+    cursor:pointer;
+    font-weight:bold;
+    box-shadow:0 0 12px rgba(255,102,255,0.7);
+    transition:transform 0.2s, box-shadow 0.2s;
+}
+.master-tutorial-btn:hover{
+    transform:scale(1.06);
+    box-shadow:0 0 20px rgba(255,102,255,1);
+}
+@keyframes masterTutorialFlow{
+    0%{background-position:0% 50%;}
+    100%{background-position:100% 50%;}
+}
 
 /* 历史最佳成绩 */
 #best-record-box {
@@ -810,6 +847,73 @@ canvas { display: block; position: relative; z-index: 1; }
 .calib-instruction  { color: #888; margin-bottom: 20px; text-align: center; line-height: 1.6; }
 .calib-result-text  { font-size: 24px; color: #0ff; font-weight: bold; margin-top: 10px; }
 
+/* ============================================================
+   15. MASTER解锁密码页面
+   ============================================================ */
+.unlock-row{
+    align-items:center;
+    gap:12px;
+}
+.unlock-box{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+.neon-input{
+    width:160px;
+    padding:8px 14px;
+    background:linear-gradient(180deg,#111,#1d1d1d);
+    border:1px solid #444;
+    border-radius:999px;
+    color:#0ff;
+    font-family:inherit;
+    font-weight:900;
+    letter-spacing:1px;
+    outline:none;
+    transition:all .2s ease;
+    box-shadow:inset 0 0 10px rgba(0,255,255,.05);
+}
+.neon-input::placeholder{
+    color:#666;
+    letter-spacing:1px;
+}
+.neon-input:focus{
+    border-color:#0ff;
+    box-shadow:0 0 12px rgba(0,255,255,.35), inset 0 0 10px rgba(0,255,255,.08);
+}
+.neon-btn{
+    background:transparent;
+    border:1px solid #ff66ff;
+    color:#ff66ff;
+    padding:8px 16px;
+    border-radius:999px;
+    cursor:pointer;
+    font-weight:900;
+    letter-spacing:1px;
+    transition:all .2s ease;
+}
+.neon-btn:hover{
+    background:rgba(255,102,255,.12);
+    box-shadow:0 0 12px rgba(255,102,255,.35);
+}
+.neon-btn.success,
+.neon-input.success{
+    border-color:#00ff88;
+    color:#00ff88;
+    box-shadow:0 0 12px rgba(0,255,136,.35);
+}
+
+.neon-btn.error,
+.neon-input.error{
+    border-color:#ff4466;
+    color:#ff4466;
+    animation:shake .25s linear 2;
+}
+@keyframes shake{
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-3px)}
+    75%{transform:translateX(3px)}
+}
 </style>
 </head>
 <body>
@@ -998,15 +1102,21 @@ Logo 开场页（最先显示）
             <p id="preview-artist"  style="color:#0ff;margin:0;">-</p>
             <p id="preview-charter" style="color:#666;font-size:12px;margin-top:5px;">-</p>
             <button onclick="window.location.href='tutorial.html'"
-                style="margin:10px 0;background:transparent;border:1px solid #0ff;color:#0ff;
-                       padding:5px 20px;border-radius:20px;cursor:pointer;">
+                style="margin:10px 0 6px 0;background:transparent;border:1px solid #0ff;color:#0ff;
+                    padding:5px 20px;border-radius:20px;cursor:pointer;">
                 📖 进入新手教学 (TUTORIAL)
             </button>
+            <button onclick="window.location.href='master_tutorial.html'"
+                class="master-tutorial-btn" style="display: none;">
+                ⛔ Master领域
+            </button>
+
             <div class="diff-selector">
                 <button class="diff-btn" data-diff="easy">EASY</button>
                 <button class="diff-btn" data-diff="normal">NORMAL</button>
                 <button class="diff-btn" data-diff="hard">HARD</button>
                 <button class="diff-btn" data-diff="expert">EXPERT</button>
+                <button class="diff-btn" data-diff="master">MASTER</button>
             </div>
             <div id="best-record-box">
                 <div class="record-label">BEST SCORE</div>
@@ -1116,6 +1226,8 @@ Logo 开场页（最先显示）
                 <select id="input-mode-select">
                     <option value="arrow">Arrow Keys (↑→↓←)</option>
                     <option value="wasd">WASD (W D S A)</option>
+                    <option value="master_number" class="master-input-option">Master(Number)</option>
+                    <option value="master_wasd" class="master-input-option">Master(WASD)</option>
                 </select>
             </div>
             <div class="setting-row">
@@ -1126,6 +1238,23 @@ Logo 开场页（最先显示）
                 <span>Character (立绘选择)</span>
                 <select id="character-select" style="width:150px;"></select>
             </div>
+
+            <!-- Master难度解锁 -->
+            <div class="setting-row unlock-row" id="master-unlock-row" style="display: none;">
+                <span>Unlock Master Mode</span>
+                <div class="unlock-box">
+                    <input
+                        type="password"
+                        id="master-password-input"
+                        class="neon-input"
+                        placeholder="ENTER CODE"
+                        maxlength="16"
+                        autocomplete="off"
+                    >
+                    <button id="unlock-master-btn" class="neon-btn">UNLOCK</button>
+                </div>
+            </div>
+
         </div>
 
         <!-- ASSIST -->
@@ -1142,7 +1271,16 @@ Logo 开场页（最先显示）
                     <label style="display:flex;gap:4px;align-items:center;color:#aaa;"><input type="checkbox" id="auto-right-check">→（D）</label>
                     <label style="display:flex;gap:4px;align-items:center;color:#aaa;"><input type="checkbox" id="auto-down-check">↓（S）</label>
                     <label style="display:flex;gap:4px;align-items:center;color:#aaa;"><input type="checkbox" id="auto-left-check">←（A）</label>
+
+                    <!-- MASTER 解锁后显示 -->
+                    <label class="master-assist" style="display:none;gap:4px;align-items:center;color:#aaa;"><input type="checkbox" id="auto-ur-check">↗（E/9）</label>
+                    <label class="master-assist" style="display:none;gap:4px;align-items:center;color:#aaa;"><input type="checkbox" id="auto-dr-check">↘（C/3）</label>
+                    <label class="master-assist" style="display:none;gap:4px;align-items:center;color:#aaa;"><input type="checkbox" id="auto-dl-check">↙（Z/1）</label>
+                    <label class="master-assist" style="display:none;gap:4px;align-items:center;color:#aaa;"><input type="checkbox" id="auto-ul-check">↖（Q/7）</label>
                 </div>
+            </div>
+            <div style="color:#666;font-size:12px;line-height:1.6;margin-top:10px;">
+                Tip: 使用 ASSIST（空格/方向键）辅助自动模式时，不记录成绩与碎片奖励。
             </div>
         </div>
 
@@ -1219,13 +1357,14 @@ Logo 开场页（最先显示）
         <!-- OTHER -->
         <div class="settings-section" data-section="other">
             <div class="setting-group-title" style="color:#666;border-color:#666;">DEBUG / OTHER</div>
-            <div class="setting-row" style="display:none;">
+
+            <!-- 调试用代码，开启开发者模式，使用时删除style可视化 -->
+            <div class="setting-row" style="display:none">
                 <span style="color:#888;">Developer Mode</span>
                 <input type="checkbox" id="dev-mode-check">
             </div>
-            <div style="color:#666;font-size:12px;line-height:1.6;margin-top:10px;">
-                Tip: 使用 ASSIST（空格/方向键自动）会被视为辅助模式，默认不记录成绩与碎片奖励。
-            </div>
+            <!-- 不用时请在setting-row中加入style="display:none;" -->
+            
         </div>
 
         <div style="text-align:center;margin-top:30px;">
@@ -1307,20 +1446,55 @@ const CHAR_LIST = [
     { id: '你的呼唤', name: '你的呼唤',       src: 'nana/3.png' },
     { id: '音韵律动', name: '音韵律动',       src: 'nana/5.png' },
 ];
-
-const LANE_COLORS = ['#ff0055','#00ffaa','#00ccff','#ffcc00','#d600ff'];
-const LANE_ANGLES = [-1.57, 0, 1.57, 3.14];
+const LANE_COLORS = [
+    '#ff0055', // ↑
+    '#00ffaa', // →
+    '#00ccff', // ↓
+    '#ffcc00', // ←
+    '#d600ff',  // 中心
+    '#8a5cff', // ↗
+    '#66ff66', // ↘
+    '#ff8800', // ↙
+    '#ff66ff', // ↖
+];
+const LANE_ANGLES = [
+-1.57,
+0,
+1.57,
+3.14,
+0, // 空格
+-0.785,
+0.785,
+2.356,
+-2.356
+];
 const HIT_RADIUS  = 260;
-
 const KEYS_MAP = {
-    arrow: { ArrowUp:0, ArrowRight:1, ArrowDown:2, ArrowLeft:3, Space:4 },
-    wasd:  { KeyW:0,    KeyD:1,       KeyS:2,      KeyA:3,      Space:4 },
+    arrow: {
+        ArrowUp:0, ArrowRight:1, ArrowDown:2, ArrowLeft:3, Space:4  
+    },
+    wasd: {
+        KeyW:0, KeyD:1, KeyS:2, KeyA:3, Space:4,
+    },
+
+    //Master难度按键
+    master_number: {
+        Numpad8:0, Numpad9:5, Numpad6:1, Numpad3:6,
+        Numpad5:4,
+        Numpad1:7, Numpad4:3, Numpad7:8,
+        Numpad2:2
+    },
+    master_wasd: {
+        KeyW:0, KeyE:5, KeyD:1, KeyC:6,
+        KeyX:2, KeyS:4,
+        KeyZ:7, KeyA:3, KeyQ:8,
+    }
+
 };
 
 const JUDGE = { CRITICAL:0.04, PERFECT:0.08, GOOD:0.2, BAD:0.32, TRAP:0.35 };
-
-const CLEAR_THRESHOLDS = { easy:600000, normal:600000, hard:700000, expert:800000 };
-const DIFF_MAX_STARS   = { easy:5, normal:7, hard:8, expert:10 };
+const CLEAR_THRESHOLDS = { easy:600000, normal:600000, hard:700000, expert:800000, master:800000 };
+const DIFF_MAX_STARS   = { easy:5, normal:7, hard:8, expert:10, master:10 };
 const CLEAR_TYPE       = { NONE:0, FAILED:1, CLEAR:2, FC:3, AP:4, AC:5 };
 
 const CURRENT_VERSION_KEY = 'V1.6.0_alpha';
@@ -1599,7 +1773,8 @@ const Settings = (() => {
         hitSound: true, hitSoundPack: 'mp3',
         bgmVolume: 0.8, sfxVolume: 0.8,
         autoSpace: false, selectedChar: 'nana',
-        autoArrows: { up:false, right:false, down:false, left:false },
+        autoArrows: { up:false, right:false, down:false, left:false,ur:false, dr:false, dl:false, ul:false },
+        masterUnlocked: false,
     };
     let data = { ...defaults };
 
@@ -1614,7 +1789,11 @@ const Settings = (() => {
 
     function isAssistActive() {
         const a = data.autoArrows || {};
-        return !!(data.autoSpace || a.up || a.right || a.down || a.left);
+        return !!(
+            data.autoSpace ||
+            a.up || a.right || a.down || a.left ||
+            a.ur || a.dr || a.dl || a.ul
+        );
     }
 
     function initUI() {
@@ -1649,6 +1828,24 @@ const Settings = (() => {
         bindCheck('dev-mode-check',  'devMode');
         bindSelect('input-mode-select', 'inputMode');
 
+        // Input Mode 显示控制(当玩家未解锁Master时，隐藏对应操作)
+        const inputSelect = document.getElementById('input-mode-select');
+        const masterOptions = inputSelect.querySelectorAll('.master-input-option');
+        function refreshInputModeOptions() {
+            if (data.masterUnlocked) {
+                masterOptions.forEach(op => op.style.display = '');
+            } else {
+                masterOptions.forEach(op => op.style.display = 'none');
+                // 如果当前是Master模式，则自动切回普通模式
+                if (data.inputMode.startsWith('master')) {
+                    data.inputMode = 'arrow';
+                    inputSelect.value = 'arrow';
+                    save();
+                }
+            }
+        }
+        refreshInputModeOptions();
+
         const offsetEl = document.getElementById('offset-input');
         offsetEl.value = data.offset;
         offsetEl.addEventListener('change', e => { data.offset = parseInt(e.target.value)||0; save(); });
@@ -1662,7 +1859,12 @@ const Settings = (() => {
         charSel.value = data.selectedChar || CHAR_LIST[0].id;
         charSel.addEventListener('change', e => { data.selectedChar = e.target.value; save(); });
 
-        const arrowIds = { up:'auto-up-check', right:'auto-right-check', down:'auto-down-check', left:'auto-left-check' };
+        const arrowIds = { up:'auto-up-check', right:'auto-right-check', down:'auto-down-check', left:'auto-left-check', ur:'auto-ur-check',dr:'auto-dr-check',dl:'auto-dl-check',ul:'auto-ul-check' };
+        // MASTER辅助键显示控制
+        document.querySelectorAll('.master-assist').forEach(el => {
+            el.style.display = data.masterUnlocked ? 'flex' : 'none';
+        });
+
         Object.entries(arrowIds).forEach(([dir, id]) => {
             const el = document.getElementById(id);
             el.checked = !!(data.autoArrows && data.autoArrows[dir]);
@@ -1680,6 +1882,68 @@ const Settings = (() => {
             sections.forEach(s => s.classList.toggle('active', s.dataset.section === name));
         }
         tabs.forEach(t => t.addEventListener('click', () => activateTab(t.dataset.tab)));
+
+        // Master 难度解锁
+        const unlockBtn = document.getElementById('unlock-master-btn');
+        const unlockRow = document.getElementById('master-unlock-row');
+        if (data.masterUnlocked) {
+            unlockRow.style.display = 'none';
+            //========调试用代码：锁定Master难度=========
+            // unlockBtn.onclick = () => {
+            //     const pwd = prompt('请输入解锁密码');
+            //     if (pwd === 'N-07-NotPLAY!') {
+            //         data.masterUnlocked = false;
+            //         save();
+            //         showMasterUnlockAnimation();
+            //         refreshInputModeOptions();
+            //         document.querySelectorAll('.master-assist').forEach(el => {
+            //             el.style.display = 'flex';
+            //         });
+            //         SongSelect.refreshList();
+            //     } else {
+            //         alert('密码错误');
+            //     }
+            // };
+            //==========以上为调试用代码=============
+        } else {
+            const unlockBtn = document.getElementById('unlock-master-btn');
+            const unlockRow = document.getElementById('master-unlock-row');
+            const pwdInput  = document.getElementById('master-password-input');
+            function tryUnlockMaster(){
+                const pwd = pwdInput.value.trim();
+                unlockBtn.classList.remove('success','error');
+                pwdInput.classList.remove('success','error');
+
+                if (pwd === 'NANA1207') {
+                    data.masterUnlocked = true;
+                    save();
+                    showMasterUnlockAnimation();
+                    refreshInputModeOptions();
+                    unlockBtn.classList.add('success');
+                    pwdInput.classList.add('success');
+                    setTimeout(() => {
+                        unlockRow.style.display = 'none';
+                    }, 600);
+                    document.querySelectorAll('.master-assist').forEach(el => {
+                        el.style.display = 'flex';
+                    });
+                    SongSelect.refreshList();
+                    Collection.switchTab('story');
+                } else {
+                    unlockBtn.classList.add('error');
+                    pwdInput.classList.add('error');
+                    pwdInput.select();
+                }
+            }
+            if (data.masterUnlocked) {
+                unlockRow.style.display = 'none';
+            } else {
+                unlockBtn.onclick = tryUnlockMaster;
+                pwdInput.addEventListener('keydown', e => {
+                    if (e.key === 'Enter') tryUnlockMaster();
+                });
+            }
+        }
         activateTab('gameplay');
     }
 
@@ -1957,15 +2221,43 @@ const Collection = (() => {
         document.getElementById('collection-detail-container').innerHTML='<div class="detail-placeholder">SELECT A FILE TO DECRYPT</div>';
         selectedItem=null;
     }
+    function _canShowItem(item) {
+        const settings = Settings.get();    
+        const inv = Inventory.get();
+
+        if (!item.require) return true;
+
+        switch (item.require) {
+            case 'master':
+                return settings.masterUnlocked;
+            // 日期限定条件
+            case 'date_1207': {
+                const now = new Date();
+                return now.getMonth() === 11 && now.getDate() === 7; // 12月7日
+            }
+            default:
+                return true;
+        }
+    }
     function _renderList() {
-        const c=document.getElementById('collection-list-container'); c.innerHTML='';
-        data[currentTab].forEach(item=>{
-            const ok=Inventory.isUnlocked(item.id);
-            const div=document.createElement('div');
-            div.className=`col-item-card ${ok?'':'locked'}`;
-            div.innerHTML=`<div class="col-item-info"><h4>${item.title}</h4><p>${ok?'DECRYPTED':'ENCRYPTED'}</p></div>${!ok?'<span class="lock-icon">🔒</span>':''}`;
-            div.onclick=()=>_selectItem(item,div,ok); c.appendChild(div);
-        });
+        const c = document.getElementById('collection-list-container');
+        c.innerHTML = '';
+        data[currentTab]
+            .filter(item => _canShowItem(item))
+            .forEach(item => {
+                const ok = Inventory.isUnlocked(item.id);
+                const div = document.createElement('div');
+                div.className = `col-item-card ${ok ? '' : 'locked'}`;
+                div.innerHTML = `
+                    <div class="col-item-info">
+                        <h4>${item.title}</h4>
+                        <p>${ok ? 'DECRYPTED' : 'ENCRYPTED'}</p>
+                    </div>
+                    ${!ok ? '<span class="lock-icon">🔒</span>' : ''}
+                `;
+                div.onclick = () => _selectItem(item, div, ok);
+                c.appendChild(div);
+            });
     }
     async function _selectItem(item,el,isUnlocked) {
         document.querySelectorAll('.col-item-card').forEach(c=>c.classList.remove('active'));
@@ -2114,7 +2406,9 @@ const Particles = (() => {
         }
     }
     function _pos(l) {
-        if(l===4) return{x:CANVAS.width/2,y:CANVAS.height/2};
+        if (l===4) {
+            return { x:CANVAS.width/2, y:CANVAS.height/2 };
+        }
         const a=LANE_ANGLES[l]; return{x:CANVAS.width/2+Math.cos(a)*HIT_RADIUS,y:CANVAS.height/2+Math.sin(a)*HIT_RADIUS};
     }
     function update() {
@@ -2158,14 +2452,36 @@ const Game = (() => {
     function _resetStats(){stats={score:0,rawScore:0,maxCombo:0,combo:0,miss:0,bad:0,good:0,perfect:0,critical:0,auto:0};}
 
     function _isAutoLane(lane){
-        const s=Settings.get(); if(s.devMode||s.autoMode)return true;
+        const s=Settings.get();
+        if(s.devMode||s.autoMode)return true;
         const a=s.autoArrows||{};
-        return(lane===0&&a.up)||(lane===1&&a.right)||(lane===2&&a.down)||(lane===3&&a.left)||(lane===4&&s.autoSpace);
+        return (
+            (lane===0&&a.up)   ||
+            (lane===1&&a.right)||
+            (lane===2&&a.down) ||
+            (lane===3&&a.left) ||
+            (lane===4&&s.autoSpace) ||
+            (lane===5&&a.ur) ||
+            (lane===6&&a.dr) ||
+            (lane===7&&a.dl) ||
+            (lane===8&&a.ul)
+        );
     }
     function _isAssistLane(lane){
-        const s=Settings.get(); if(s.autoMode||s.devMode)return false;
+        const s=Settings.get();
+        if(s.autoMode||s.devMode)return false;
         const a=s.autoArrows||{};
-        return(lane===4&&s.autoSpace)||(lane===0&&a.up)||(lane===1&&a.right)||(lane===2&&a.down)||(lane===3&&a.left);
+        return (
+            (lane===4&&s.autoSpace) ||
+            (lane===0&&a.up) ||
+            (lane===1&&a.right) ||
+            (lane===2&&a.down) ||
+            (lane===3&&a.left) ||
+            (lane===5&&a.ur) ||
+            (lane===6&&a.dr) ||
+            (lane===7&&a.dl) ||
+            (lane===8&&a.ul)
+        );
     }
     function _now(){ return (AudioManager.ctx.currentTime-startTime)-(Settings.get().offset/1000); }
 
@@ -2185,12 +2501,12 @@ const Game = (() => {
             const auto=_isAutoLane(n.lane), assist=_isAssistLane(n.lane);
             if(!n.headHit&&now>=n.time&&auto){
                 n.headHit=true; Particles.addExplosion(n.lane);
-                const t=(Settings.get().autoMode||assist)?'auto':'perfect';
+                const t=(Settings.get().autoMode||assist)?'auto':'critical';
                 n.duration===0?(n.processed=true,_hit(t,n.lane)):(n.holding=true,_hit(t,n.lane));
             }
             if(n.holding&&auto&&now>=n.time+n.duration){
                 n.holding=false;n.processed=true;Particles.addExplosion(n.lane);
-                _hit((Settings.get().autoMode||assist)?'auto':'perfect',n.lane);
+                _hit((Settings.get().autoMode||assist)?'auto':'critical',n.lane);
             }
         });
         // MISS
@@ -2211,12 +2527,43 @@ const Game = (() => {
     }
 
     function _draw(cx,cy,now){
+        // 绘制Master难度谱面
+        const isMaster = SongSelect.selectedDiff() === 'master';
+        if (isMaster) {
+            const glow = CTX.createRadialGradient(cx, cy, 40, cx, cy, HIT_RADIUS + 80);
+            glow.addColorStop(0, 'rgba(255,255,255,0)');
+            glow.addColorStop(0.5, 'rgba(255,102,255,0.08)');
+            glow.addColorStop(1, 'rgba(0,204,255,0.02)');
+            CTX.fillStyle = glow;
+            CTX.beginPath();
+            CTX.arc(cx, cy, HIT_RADIUS + 80, 0, Math.PI * 2);
+            CTX.fill();
+        }
+
         const travel=3.0/Settings.get().speed;
         CTX.beginPath();CTX.arc(cx,cy,HIT_RADIUS,0,6.28);CTX.lineWidth=3;CTX.strokeStyle='#fff';CTX.stroke();
-        LANE_ANGLES.forEach((ang,i)=>{
-            const x=cx+Math.cos(ang)*HIT_RADIUS,y=cy+Math.sin(ang)*HIT_RADIUS;
-            CTX.beginPath();CTX.moveTo(cx,cy);CTX.lineTo(x,y);CTX.lineWidth=2;CTX.strokeStyle='rgba(255,255,255,0.1)';CTX.stroke();
-            CTX.beginPath();CTX.arc(x,y,18,0,6.28);CTX.fillStyle='rgba(0,0,0,0.5)';CTX.fill();CTX.strokeStyle=LANE_COLORS[i];CTX.lineWidth=3;CTX.stroke();
+        const drawLanes = SongSelect.selectedDiff() === 'master'
+            ? [0,1,2,3,5,6,7,8]   // 不绘制中心键 lane=4
+            : [0,1,2,3];
+        drawLanes.forEach(i => {
+            const ang = LANE_ANGLES[i];
+            const x = cx + Math.cos(ang) * HIT_RADIUS;
+            const y = cy + Math.sin(ang) * HIT_RADIUS;
+            // 轨道线
+            CTX.beginPath();
+            CTX.moveTo(cx, cy);
+            CTX.lineTo(x, y);
+            CTX.lineWidth = 2;
+            CTX.strokeStyle = 'rgba(255,255,255,0.1)';
+            CTX.stroke();
+            // 判定圈
+            CTX.beginPath();
+            CTX.arc(x, y, 18, 0, 6.28);
+            CTX.fillStyle = 'rgba(0,0,0,0.5)';
+            CTX.fill();
+            CTX.strokeStyle = LANE_COLORS[i];
+            CTX.lineWidth = 3;
+            CTX.stroke();
         });
         CTX.beginPath();CTX.arc(cx,cy,35,0,6.28);CTX.strokeStyle='rgba(214,0,255,0.4)';CTX.stroke();
         notes.forEach(n=>{
@@ -2239,7 +2586,7 @@ const Game = (() => {
         else{CTX.beginPath();CTX.moveTo(cx+Math.cos(ang)*rH,cy+Math.sin(ang)*rH);CTX.lineTo(cx+Math.cos(ang)*rT,cy+Math.sin(ang)*rT);CTX.strokeStyle=LANE_COLORS[lane];CTX.lineWidth=10;CTX.stroke();}
     }
     function _drawHead(cx,cy,lane,r,isSync){
-        if(isSync){CTX.beginPath();if(lane===4)CTX.arc(cx,cy,r+4,0,6.28);else{const a=LANE_ANGLES[lane];CTX.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r,19,0,6.28);}CTX.strokeStyle='#FFD700';CTX.lineWidth=3;CTX.stroke();}
+        if(isSync){CTX.beginPath();if(lane===4) CTX.arc(cx,cy,r+4,0,6.28);else{const a=LANE_ANGLES[lane];CTX.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r,19,0,6.28);}CTX.strokeStyle='#FFD700';CTX.lineWidth=3;CTX.stroke();}
         if(lane===4){CTX.beginPath();CTX.arc(cx,cy,r,0,6.28);CTX.strokeStyle=LANE_COLORS[4];CTX.lineWidth=6;CTX.stroke();}
         else{const a=LANE_ANGLES[lane];CTX.beginPath();CTX.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r,15,0,6.28);CTX.fillStyle=LANE_COLORS[lane];CTX.fill();}
     }
@@ -2556,11 +2903,28 @@ const SongSelect = (() => {
         if(_cur.subtitle?.trim()){sub.innerText=_cur.subtitle;sub.style.display='block';}else sub.style.display='none';
         const charts=_cur.charts||{};
         document.querySelectorAll('.diff-btn').forEach(btn=>{
-            btn.classList.toggle('disabled',!(charts[btn.dataset.diff]||(_cur.id==='demo'&&btn.dataset.diff==='normal')));
+            const diff = btn.dataset.diff;
+
+            // Master 未解锁时隐藏按钮
+            if (diff === 'master' && !Settings.get().masterUnlocked) {
+                btn.style.display = 'none';
+                return;
+            } else {
+                btn.style.display = '';
+            }
+
+            btn.classList.toggle(
+                'disabled',
+                !(charts[diff] || (_cur.id==='demo' && diff==='normal'))
+            );
         });
         if(!charts[_diff]&&_cur.id!=='demo'){const av=Object.keys(charts).find(k=>charts[k]);if(av)_diff=av;}
         _updDiff(); Records.updateDisplay(_cur,_diff);
         const id=AudioManager.newPreviewId(); AudioManager.playPreview(_cur,id);
+        const tip = document.getElementById('master-keytip');
+        if (tip) {
+            tip.style.display = (_diff === 'master') ? 'block' : 'none';
+        }
     }
     function _updDiff(){
         document.querySelectorAll('.diff-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.diff===_diff));
@@ -2573,7 +2937,7 @@ const SongSelect = (() => {
         if(!lv||!max){el.style.display='none';return;}
         el.innerText=Array.from({length:10},(_,i)=>i<lv?'★':'☆').join(''); el.style.display='block';
     }
-    return { init, selectSong, currentSong, selectedDiff };
+    return { init, selectSong, currentSong, selectedDiff, refreshList: () => _renderList() };
 })();
 
 /* ============================================================
@@ -2753,6 +3117,80 @@ resize();
         });
     });
 })();
+
+/* ============================================================
+Master难度解锁动画
+============================================================ */
+function showMasterUnlockAnimation(){
+    const overlay = document.getElementById('master-unlock-overlay');
+    const icon    = document.getElementById('master-unlock-icon');
+    const text    = document.getElementById('master-unlock-text');
+    overlay.style.display = 'flex';
+    requestAnimationFrame(()=>{
+        icon.style.opacity = '1';
+        icon.style.transform = 'scale(1) rotate(0deg)';
+        setTimeout(()=>{
+            text.style.opacity='1';
+            text.style.transform='translateY(0)';
+        },300);
+    });
+    setTimeout(()=>{
+        overlay.style.opacity='0';
+    },2200);
+    setTimeout(()=>{
+        overlay.style.display='none';
+        overlay.style.opacity='1';
+        icon.style.opacity='0';
+        icon.style.transform='scale(0.3) rotate(-20deg)';
+        text.style.opacity='0';
+        text.style.transform='translateY(20px)';
+    },2800);
+}
+
 </script>
+
+<!-- Master难度解锁动画 -->
+<div id="master-unlock-overlay" style="
+display:none;
+position:absolute;
+inset:0;
+z-index:200;
+background:rgba(0,0,0,0.9);
+backdrop-filter:blur(8px);
+align-items:center;
+justify-content:center;
+flex-direction:column;
+color:white;
+font-family:Segoe UI;
+letter-spacing:2px;
+">
+    <div id="master-unlock-icon" style="
+    font-size:80px;
+    transform:scale(0.3) rotate(-20deg);
+    opacity:0;
+    transition:all 0.6s ease;
+    ">🔓</div>
+
+    <div id="master-unlock-text" style="
+        margin-top:20px;
+        font-size:36px;
+        font-weight:900;
+        color:#ff66ff;
+        opacity:0;
+        transform:translateY(20px);
+        transition:all 0.6s ease;
+    ">
+        MASTER MODE UNLOCKED
+    </div>
+    <div style="
+        margin-top:10px;
+        color:#aaa;
+        font-size:14px;
+        opacity:0.8;
+    ">
+        Hidden charts are now available.
+    </div>
+</div>
+
 </body>
 </html>

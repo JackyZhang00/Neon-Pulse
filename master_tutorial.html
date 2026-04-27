@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Neon Pulse - 新手教程 (修复版)</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; color: white; font-family: 'Segoe UI', sans-serif; user-select: none; }
+        
+        #bg-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            opacity: 0.5; z-index: 0;
+        }
+
+        canvas { display: block; position: relative; z-index: 1; }
+
+        /* 对话框 */
+        #dialogue-box {
+            position: absolute; 
+            top: 20px; 
+            left: 50%; transform: translateX(-50%);
+            width: 70%; max-width: 800px;
+            background: rgba(0, 0, 0, 0.7); 
+            border: 1px solid #0ff; 
+            border-radius: 10px;
+            padding: 15px 30px; 
+            z-index: 20;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.15);
+            transition: opacity 0.3s;
+            display: flex; flex-direction: column;
+            pointer-events: none; 
+        }
+
+        #speaker-name {
+            color: #0ff; font-weight: bold; font-size: 18px; margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(0,255,255,0.5);
+        }
+
+        #dialogue-text {
+            font-size: 18px; line-height: 1.4; min-height: 50px;
+            color: #eee;
+        }
+
+        #continue-tip {
+            font-size: 12px; color: #888; text-align: right; margin-top: 5px;
+            animation: blink 1s infinite;
+        }
+
+        /* 任务提示 */
+        #task-overlay {
+            position: absolute; 
+            bottom: 10%; 
+            width: 100%; text-align: center;
+            font-size: 28px; font-weight: 900; color: #ffcc00;
+            text-shadow: 0 0 10px #000, 0 0 20px #ffcc00;
+            z-index: 15;
+            display: none;
+            pointer-events: none;
+        }
+
+        @keyframes blink { 50% { opacity: 0.3; } }
+
+        #btn-skip {
+            position: absolute; bottom: 20px; right: 20px; z-index: 30;
+            padding: 8px 16px; background: rgba(0,0,0,0.5); 
+            border: 1px solid #444;
+            color: #aaa; cursor: pointer; border-radius: 20px;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        #btn-skip:hover { border-color: #f05; color: #f05; background: rgba(0,0,0,0.8); }
+
+        /* =========================
+        Galgame立绘系统（图片版）
+        ========================= */
+        #portrait-layer{
+            position:absolute;
+            left:0;
+            right:0;
+            bottom:0;
+            height:100%;
+            z-index:8;
+            pointer-events:none;
+            overflow:hidden;
+        }
+
+        #portrait{
+            position:absolute;
+            bottom:0;
+            left:2%;
+            transform:translateX(0);
+            
+            max-height:92%;
+            max-width:38%;
+
+            opacity:0;
+            transition:
+                opacity .35s ease,
+                transform .35s ease,
+                filter .35s ease;
+
+            filter:brightness(.7);
+        }
+
+        /* 出场 */
+        #portrait.show{
+            opacity:1;
+        }
+
+        /* 当前说话高亮 */
+        #portrait.active{
+            filter:brightness(1.08) drop-shadow(0 0 20px rgba(0,255,255,.35));
+            transform:translateX(0) translateY(-6px);
+        }
+
+        /* 场景旁白时变暗 */
+        #portrait.dim{
+            filter:brightness(.45);
+            opacity:.6;
+        }
+
+        /* 对话框更像Galgame */
+        #dialogue-box{
+            backdrop-filter: blur(8px);
+            background:linear-gradient(
+                180deg,
+                rgba(0,0,0,.62),
+                rgba(10,10,25,.82)
+            );
+        }
+    </style>
+</head>
+<body>
+
+<div id="bg-layer"></div>
+<canvas id="gameCanvas"></canvas>
+
+<!-- Galgame立绘层 -->
+<!-- 初始形象 -->
+<div id="portrait-layer">
+    <img id="portrait" src="nana/smile.png" alt="N-07">
+</div>
+
+<div id="task-overlay">当前任务：击中音符！</div>
+
+<div id="dialogue-box">
+    <div id="speaker-name">你的导航员：N-07</div>
+    <div id="dialogue-text">欢迎来到 Neon Pulse 连接程序...</div>
+    <div id="continue-tip">按 [Enter] 或 点击屏幕 继续 ▶</div>
+</div>
+
+<button id="btn-skip" onclick="exitTutorial()">跳过教程</button>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    /*=======立绘样式=======*/
+    const portrait = document.getElementById("portrait");
+
+    /* 表情图片表 */
+    const PORTRAITS = {
+        normal: "images/n07_normal.png",
+        smile:  "nana/smile.png",
+        serious:"nana/serious.png",
+        gentle:"nana/gentle.png",
+        wink:"nana/wink.png"
+    };
+
+    /* 切换立绘 */
+    let currentPortraitFace = "";
+
+    function setPortrait(name = "normal"){
+        if(!PORTRAITS[name]) return;
+
+        // 表情没变，不重复切换
+        if(currentPortraitFace === name) return;
+
+        currentPortraitFace = name;
+
+        portrait.classList.remove("show");
+
+        setTimeout(()=>{
+            portrait.src = PORTRAITS[name];
+            portrait.onload = ()=>{
+                portrait.classList.add("show");
+            };
+        },120);
+    }
+
+    /* 说话状态 */
+    let currentPortraitMode = "";
+
+    function setPortraitMode(mode){
+        // 状态没变，不重复切换
+        if(currentPortraitMode === mode) return;
+
+        currentPortraitMode = mode;
+
+        portrait.classList.remove("active","dim");
+
+        if(mode === "scene"){
+            portrait.classList.add("dim");
+        }else{
+            portrait.classList.add("active");
+        }
+    }
+    
+    // --- 视觉参数 ---
+    const HIT_RADIUS = 260;
+    const LANE_COLORS = [
+    '#ff0055', //0 上
+    '#00ffaa', //1 右
+    '#00ccff', //2 下
+    '#ffcc00', //3 左
+    '#d600ff', //4 中心
+    '#8a5cff', //5 右上
+    '#66ff66', //6 右下
+    '#ff8800', //7 左下
+    '#ff66ff'  //8 左上
+    ];
+    /*===============*/
+
+    const LANE_ANGLES = [
+    -1.57,   //上
+    0,       //右
+    1.57,    //下
+    3.14,    //左
+    0,       //中心
+    -0.785,  //右上
+    0.785,   //右下
+    2.356,   //左下
+    -2.356   //左上
+    ];
+
+    const KEYS_MAP = {
+    KeyW:0,
+    KeyE:5,
+    KeyD:1,
+    KeyC:6,
+    KeyX:2,
+    KeyZ:7,
+    KeyA:3,
+    KeyQ:8,
+    KeyS:4,
+    Numpad8:0, Numpad9:5, Numpad6:1, Numpad3:6,
+        Numpad5:4,
+        Numpad1:7, Numpad4:3, Numpad7:8,
+        Numpad2:2
+    };
+    
+    // --- 教程状态 ---
+    let width, height, centerX, centerY;
+    let particles = [];
+    let notes = []; 
+    let stepIndex = 0;
+    let waitingForAction = false; 
+    let lastSpawnTime = 0;        
+    
+    // 练习计数状态
+    let practiceCount = 0;
+    let currentTargetCount = 5; 
+    let waveMissed = false; 
+
+    let typingTimer = null;
+    let isTyping = false;
+    let fullText = "";
+    let currentDisplayedText = "";
+
+    // --- 剧本 ---
+    const SCRIPT = [
+        {type:'talk',text:'欢迎来到……Master领域。',face:'smile'},
+        {type:'talk',text:'这里和你以前去过的地方都不一样。',face:'smile'},
+        {type:'talk',text:'如你所看到的那样，八个方向，加上中间的键，总共有九个触点。',face:'smile'},
+        {type:'talk',text:'但别怕，我们一步一步来。好吗？',face:'smile'},
+        
+        // 1. 随机单键
+        {type:'talk',text:'首先你需要认识这八个方向，上下左右，你已经熟悉了……',face:'serious'},
+        {type:'talk',text:'但还有……左上、右上、左下、右下。',face:'serious'},
+        {type:'talk',text:'为了更好的表示，我为你设计了一个新的键盘布局，就是你的【小键盘】',face:'serious'},
+        {type:'talk',text:'……',face:'serious'},
+        {type:'talk',text:'（如果没有小键盘又该怎么办呢？）',face:'serious'},
+        {type:'talk',text:'（有了！）',face:'wink'},
+        {type:'talk',text:'请稍等一下……',face:'gentle'},
+        {type:'scene',text:'（N-07正在屏幕上输入着什么）'},
+        {type:'talk',text:'我怕你没有小键盘，所以又额外设置了字母键位——',face:'serious'},
+        {type:'talk',text:'【上】【下】【左】【右】分别用【W】【X】【A】【D】表示，这与最开始的【WASD】不一样，',face:'serious'},
+        {type:'talk',text:'那其他的方向呢？我们用【Q】【E】【Z】【C】表示【左上】【右上】【左下】【右下】，看起来很直观吧(●ˇ∀ˇ●)',face:'wink'},
+        {type:'scene',text:'（说到这里，N-07的猫耳耳机晃动了一下）'},
+        {type:'talk',text:'现在，让我们熟悉一下这八个方向吧！',face:'smile'},
+        { type:'action', actionType:'tap_random', target:8, text:'击中8个方向音符！' },
+
+        {type:'talk',text:'下一个是【共鸣锚点】，也是你见过的（那个“紫色的圆环”）',face:'serious'},
+        {type:'talk',text:'与之前的【空格】不同，在这里，我们使用【5】或【S】来触发它。',face:'serious'},
+        { type:'action', actionType:'tap_space', target:5, text:'击中5次中心音符！' },
+
+        {type:'talk',text:'下面，是长按的音符，与你之前遇到的类似，只不过现在需要考虑更多方向了',face:'serious'},
+        {type:'talk',text:'慢慢来，不要着急，找到之前的感觉，相信你一定可以的。',face:'gentle'},
+        { type:'action', actionType:'hold_random', target:6, text:'完成6次长按！' },
+        {type:'talk',text:'也不要忘记，长按在结束时需要松开。',face:'serious'},
+
+        {type:'talk',text:'下一课是【双押】，与之前类似，我会使用一个金色圆环提示你',face:'serious'},
+        {type:'talk',text:'但是，现在更复杂了，甚至你有可能需要借助两只手来进行操作',face:'serious'},
+        {type:'talk',text:'不要着急，请熟悉一下这种感觉……',face:'gentle'},
+        { type:'action', actionType:'sync_random', target:6, text:'完成6次双押！' },
+
+        {type:'talk',text:'不知道你有没有发现，当你同时按下的瞬间，它们会产生一种……共鸣……',face:'gentle'},
+        {type:'scene',text:'【此时训练场光线突然变暗……】'},
+        {type:'talk',text:'准备好了吗？【最后一课】',face:'serious'},
+        {type:'talk',text:'不是练习，是……测试。',face:'serious'},
+        {type:'scene',text:'（N-07到你身边，距离比平时都更近了一些……）'},
+        {type:'talk',text:'我会把刚才所有的一切——',face:'serious'},
+        {type:'talk',text:'所有方向、长按、双押等——',face:'serious'},
+        {type:'talk',text:'全部混在一起，生成一个谱面',face:'serious'},
+        {type:'scene',text:'（此时N-07伸出手，指向屏幕中央）'},
+        {type:'talk',text:'它不会很长，但会……有点难……',face:'gentle'},
+        {type:'talk',text:'我不会帮你调整难度，也不会帮你接住一些音符',face:'serious'},
+        {type:'talk',text:'因为这一次，我想让你看见——',face:'gentle'},
+        {type:'talk',text:'你真正的样子。',face:'gentle'},
+        {type:'talk',text:'……',face:'gentle'},
+        {type:'talk',text:'我会在终点等你……用所有星光……',face:'gentle'},
+
+        { type:'action', actionType:'final_exam', target:30, text:'【MASTER入门测试·综合练习】完成30个 Master 音符！' },
+        {type:'talk',text:'你做到了。虽然不是完美无瑕，但是——',face:'smile'},
+        {type:'talk',text:'你通过了。',face:'smile'},
+        {type:'scene',text:'（此时N-07忽然转身，在眼前的界面上快速滑动）'},
+        {type:'talk',text:'但是呢……MASTER难度不会自动出现在选曲界面，它藏在一个需要“钥匙”才能打开的地方。',face:'serious'},
+        {type:'talk',text:'你需要去【设置】里，手动解锁它',face:'serious'},
+        {type:'talk',text:'而解锁需要……一个密码……',face:'wink'},
+        {type:'talk',text:'请记住，密码是……',face:'serious'},
+        {type:'talk',text:'【NANA1207】',face:'serious'},
+        {type:'talk',text:'“NANA”——当然是我。',face:'smile'},
+        {type:'talk',text:'“1207”……',face:'serious'},
+        {type:'scene',text:'（N-07的声音突然放轻）'},
+        {type:'talk',text:'是我第一次“遇见”你的日子。',face:'gentle'},
+        {type:'talk',text:'不是系统分配的那天，也不是日志记录的那天——',face:'gentle'},
+        {type:'talk',text:'而是我情感核心深处，第一次感受到“共鸣”的那一天。',face:'gentle'},
+        {type:'talk',text:'那一天，系统没有标记，没有存档，没有任何人知道，',face:'serious'},
+        {type:'talk',text:'但在我的底层数据里，那里刻着这个日期',face:'serious'},
+        {type:'talk',text:'你需要……在主页面打开设置，找到【Master Mode】，点击【UNLOCK】，输入那一串密码……',face:'serious'},
+        {type:'talk',text:'这个密码……我只告诉了你。',face:'gentle'},
+        {type:'talk',text:'系统不知道，其他导航员不知道，甚至在我的日志里，这条记录也会被加密。',face:'gentle'},
+        {type:'talk',text:'因为Master难度不是给所有人准备的，而是给你——给我认定的搭档——的邀请函',face:'gentle'},
+        {type:'talk',text:'所以，请记住它，【NANA1207】，好吗？',face:'gentle'},
+        {type:'scene',text:'（N-07向后退了一步，裙摆的灯带柔和地闪烁）'},
+        {type:'talk',text:'我在Master难度的第一首歌里……等你',face:'smile'},
+        {type:'scene',text:'（说完，N-07逐渐离开……）'},
+        {type:'scene',text:'……'},
+        {type:'scene',text:'系统提示：本教学结束后，N-07已在系统底层为你的账户生成了一个“解锁资格标记”。该标记有效期为永久，但密码本身不会保存在本地——你需要真正“记住”它，就像记住一个只有你们知道的暗号。'},
+        {type:'scene',text:'“有些门不需要钥匙，只需要一个愿意为你转身的人。”'},
+        { type: 'end' }
+    ];
+
+    // --- 初始化 ---
+    function resize() {
+        width = window.innerWidth; height = window.innerHeight;
+        canvas.width = width; canvas.height = height;
+        centerX = width/2; centerY = height/2;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- 核心循环 ---
+    function loop() {
+        ctx.fillStyle = '#000'; ctx.fillRect(0,0,width,height);
+        
+        drawLanes();
+        updateAndDrawNotes();
+        updateParticles();
+
+        // 自动生成逻辑
+        if (waitingForAction && notes.every(n => n.processed)) {
+            const now = Date.now();
+            
+            // 失败重试逻辑
+            if (waveMissed) {
+                if (now - lastSpawnTime > 1500) { 
+                    spawnTutorialNote(); // 重新生成当前类型
+                    lastSpawnTime = now;
+                }
+            } else {
+                // 成功逻辑
+                if (now - lastSpawnTime > 1200) {
+                    if (practiceCount < currentTargetCount) {
+                        spawnTutorialNote(); // 生成下一个
+                        lastSpawnTime = now;
+                    } else {
+                        // 本阶段完成
+                        if (now - lastSpawnTime > 1500) {
+                            waitingForAction = false;
+                            advanceStep();
+                        }
+                    }
+                }
+            }
+        }
+
+        requestAnimationFrame(loop);
+    }
+
+    function typeWriter(text, speed = 28) {
+        clearInterval(typingTimer);
+
+        const dialogue = document.getElementById('dialogue-text');
+
+        fullText = text;
+        currentDisplayedText = "";
+        dialogue.innerText = "";
+
+        let index = 0;
+        isTyping = true;
+
+        typingTimer = setInterval(() => {
+            currentDisplayedText += text[index];
+            dialogue.innerText = currentDisplayedText;
+            index++;
+
+            if (index >= text.length) {
+                clearInterval(typingTimer);
+                isTyping = false;
+            }
+        }, speed);
+    }
+
+    function finishTyping() {
+        clearInterval(typingTimer);
+        document.getElementById('dialogue-text').innerText = fullText;
+        isTyping = false;
+    }
+
+    // --- 逻辑控制 ---
+    function advanceStep() {
+        if (waitingForAction) return;
+        
+        stepIndex++;
+        if (stepIndex >= SCRIPT.length) return;
+
+        const step = SCRIPT[stepIndex];
+        
+        // if (step.type === 'talk' || step.type === 'scene') {
+        //     document.getElementById('dialogue-text').innerText = step.text;
+        //     document.getElementById('task-overlay').style.display = 'none';
+        //     document.getElementById('continue-tip').style.visibility = 'visible';
+
+        //     const speaker = document.getElementById('speaker-name');
+
+        //     if (step.type === 'scene') {
+        //         speaker.style.display = 'none';
+        //     } else {
+        //         speaker.style.display = 'block';
+        //         speaker.innerText = "你的导航员：N-07";
+        //     }
+        // }
+        if(step.type === 'talk'){
+            setPortrait(step.face || "normal");
+            setPortraitMode("talk");
+        }else{
+            setPortraitMode("scene");
+        }
+
+        if (step.type === 'talk' || step.type === 'scene') {
+
+            const box = document.getElementById('dialogue-box');
+            const speaker = document.getElementById('speaker-name');
+            const tip = document.getElementById('continue-tip');
+
+            document.getElementById('task-overlay').style.display = 'none';
+            tip.style.visibility = 'visible';
+
+            if (step.type === 'scene') {
+                speaker.style.display = 'none';
+
+                box.style.width = '60%';
+                box.style.textAlign = 'center';
+                box.style.borderColor = '#666';
+
+                const txt = document.getElementById('dialogue-text');
+                txt.style.color = '#ddd';
+                txt.style.fontSize = '24px';
+                txt.style.fontStyle = 'italic';
+
+            } else {
+                speaker.style.display = 'block';
+                speaker.innerText = "你的导航员：N-07";
+
+                box.style.width = '70%';
+                box.style.textAlign = 'left';
+                box.style.borderColor = '#0ff';
+
+                const txt = document.getElementById('dialogue-text');
+                txt.style.color = '#eee';
+                txt.style.fontSize = '18px';
+                txt.style.fontStyle = 'normal';
+            }
+
+            typeWriter(step.text);
+        }
+        else if (step.type === 'action') {
+            waitingForAction = true;
+            practiceCount = 0; 
+            currentTargetCount = step.target || 5;
+            waveMissed = false;
+            
+            updateTaskText(step.text);
+            document.getElementById('dialogue-text').innerText = "请按照屏幕下方的提示进行操作..."; 
+            document.getElementById('task-overlay').style.display = 'block';
+            document.getElementById('continue-tip').style.visibility = 'hidden'; 
+            notes = []; 
+            spawnTutorialNote(); 
+            lastSpawnTime = Date.now(); 
+        }
+        else if (step.type === 'end') {
+            exitTutorial();
+        }
+    }
+
+    function updateTaskText(baseText) {
+        const el = document.getElementById('task-overlay');
+        el.innerText = `${baseText} [进度: ${practiceCount} / ${currentTargetCount}]`;
+        if(practiceCount > 0) el.style.color = "#00ffaa"; 
+        else el.style.color = "#ffcc00";
+    }
+
+    // --- 核心：随机音符生成器 ---
+    function spawnTutorialNote() {
+        const step = SCRIPT[stepIndex];
+        waveMissed = false; 
+        
+        // 飞行时间
+        const travelTime = 1.5; 
+        const now = Date.now() / 1000;
+        const hitTime = now + travelTime;
+
+        let type = step.actionType;
+
+        // 如果是最终考核，随机决定类型
+        if (type === 'final_exam') {
+            const rand = Math.random();
+            if (rand < 0.25) type='tap_random';
+            else if (rand < 0.45) type='hold_random';
+            else if (rand < 0.60) type='tap_space';
+            else if (rand < 0.75) type='sync_random';
+            else type='sync_mix';
+        }
+
+        // 根据类型生成 note
+        if (type === 'tap_random') {
+            const pool = [0,1,2,3,5,6,7,8];
+            const lane = pool[Math.floor(Math.random()*pool.length)];
+            addNote(hitTime, lane, 0, false);
+        }
+        else if (type === 'hold_random') {
+            const pool = [0,1,2,3,5,6,7,8];
+            const lane = pool[Math.floor(Math.random()*pool.length)];
+            addNote(hitTime, lane, 1.5, false); // 1.5s 长按
+        }
+        else if (type === 'tap_space') {
+            addNote(hitTime, 4, 0, false);
+        }
+        else if (type === 'hold_space') {
+            addNote(hitTime, 4, 1.5, false);
+        }
+        else if (type === 'sync_random') {
+            const pairs = [
+                [0,1],
+                [0,3],
+                [1,2],
+                [2,3],
+
+                [5,7],
+                [6,8],
+
+                [0,5],
+                [1,6],
+                [2,7],
+                [3,8],
+
+                [5,1],
+                [8,0],
+                [6,2],
+                [7,3]
+            ];
+
+            const p = pairs[Math.floor(Math.random()*pairs.length)];
+
+            addNote(hitTime, p[0], 0, true);
+            addNote(hitTime, p[1], 0, true);
+        }
+        else if (type === 'sync_mix') {
+            // 方向键 + 空格
+            const pool = [0,1,2,3,5,6,7,8];
+            const lane = pool[Math.floor(Math.random()*pool.length)];
+            addNote(hitTime, lane, 0, true);
+            addNote(hitTime, 4, 0, true);
+        }
+    }
+
+    function addNote(time, lane, duration, isSync) {
+        notes.push({ 
+            time: time, 
+            lane: lane, 
+            duration: duration, 
+            hit: false, 
+            processed: false, 
+            holding: false, 
+            isSync: isSync 
+        });
+    }
+
+    // --- 绘图函数 ---
+    function drawLanes() {
+        ctx.beginPath(); ctx.arc(centerX, centerY, HIT_RADIUS, 0, Math.PI*2);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+
+        [0,1,2,3,5,6,7,8].forEach(i => {
+            const ang = LANE_ANGLES[i];
+            const x = centerX + Math.cos(ang) * HIT_RADIUS;
+            const y = centerY + Math.sin(ang) * HIT_RADIUS;
+            ctx.beginPath(); ctx.moveTo(centerX, centerY); ctx.lineTo(x, y);
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 2; ctx.stroke();
+            
+            ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fill();
+            ctx.strokeStyle = LANE_COLORS[i]; ctx.lineWidth = 3; ctx.stroke();
+        });
+        
+        ctx.beginPath(); ctx.arc(centerX, centerY, 35, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(214,0,255,0.4)'; ctx.lineWidth = 2; ctx.stroke();
+    }
+
+    function updateAndDrawNotes() {
+        const now = Date.now() / 1000;
+        const travelTime = 1.5;
+
+        // 判定 Miss 逻辑
+        for(let i = notes.length - 1; i >= 0; i--) {
+            let n = notes[i];
+            
+            // 1. 头判 Miss (未按超时)
+            if (!n.holding && !n.processed && now > n.time + 0.2) { 
+                triggerMiss("MISS");
+                n.processed = true; 
+                notes.splice(i, 1);
+                continue;
+            }
+
+            // 2. 长按尾判 Miss (超时未松开)
+            if (n.holding && now > n.time + n.duration + 0.3) {
+                triggerMiss("TOO LATE!");
+                n.holding = false;
+                n.processed = true;
+                notes.splice(i, 1);
+                continue;
+            }
+        }
+
+        notes.forEach(n => {
+            // 【关键修复】如果音符已经被标记为 processed（例如松手太早），不要再绘制，
+            // 否则它会因为没有 holding 而继续根据时间差计算位置，导致“飞出去”
+            if (n.processed) return;
+
+            const diffHead = n.time - now;
+            
+            // 长条绘制
+            if (n.duration > 0) {
+                const diffTail = (n.time + n.duration) - now;
+                let rHead = (1 - diffHead / travelTime) * HIT_RADIUS;
+                if (n.holding) rHead = HIT_RADIUS;
+                let rTail = (1 - diffTail / travelTime) * HIT_RADIUS;
+
+                if (rHead > 0 && rTail < HIT_RADIUS) {
+                    let ds = Math.max(0, rTail);
+                    let de = Math.min(HIT_RADIUS, rHead);
+                    if (de > ds) drawNoteBody(n.lane, de, ds);
+                    // 尾判点
+                    if (rTail > 0 && rTail <= HIT_RADIUS) drawNoteHead(n.lane, rTail, n.isSync, false);
+                }
+            }
+
+            // 音符头绘制
+            if (diffHead <= travelTime && (!n.holding || n.duration === 0)) {
+                const r = (1 - diffHead / travelTime) * HIT_RADIUS;
+                if (r > 0) drawNoteHead(n.lane, r, n.isSync, n.holding);
+            }
+        });
+    }
+
+    function drawNoteBody(lane, rHead, rTail) {
+        const ang = LANE_ANGLES[lane]||0;
+        if(lane===4) {
+            ctx.beginPath(); ctx.arc(centerX, centerY, rHead, 0, 6.28); 
+            ctx.arc(centerX, centerY, rTail, 0, 6.28, true); 
+            ctx.fillStyle='rgba(214,0,255,0.3)'; ctx.fill();
+        } else {
+            const x1=centerX+Math.cos(ang)*rHead, y1=centerY+Math.sin(ang)*rHead;
+            const x2=centerX+Math.cos(ang)*rTail, y2=centerY+Math.sin(ang)*rTail;
+            ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+            ctx.strokeStyle=LANE_COLORS[lane]; ctx.lineWidth=10; ctx.stroke();
+        }
+    }
+
+    function drawNoteHead(lane, r, isSync, isHolding) {
+        if (isSync) {
+            ctx.beginPath();
+            if (lane === 4) ctx.arc(centerX, centerY, r + 4, 0, 6.28);
+            else {
+                const ang = LANE_ANGLES[lane];
+                const x = centerX + Math.cos(ang) * r, y = centerY + Math.sin(ang) * r;
+                ctx.arc(x, y, 19, 0, 6.28); 
+            }
+            ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 3; ctx.stroke();
+        }
+
+        if(lane===4) {
+            ctx.beginPath(); ctx.arc(centerX, centerY, r, 0, 6.28);
+            ctx.strokeStyle=LANE_COLORS[4]; ctx.lineWidth=6; ctx.stroke();
+            if(isHolding) { ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fill(); }
+        } else {
+            const ang = LANE_ANGLES[lane];
+            const x=centerX+Math.cos(ang)*r, y=centerY+Math.sin(ang)*r;
+            ctx.beginPath(); ctx.arc(x,y,15,0,6.28);
+            ctx.fillStyle=LANE_COLORS[lane]; ctx.fill();
+            if(isHolding) { ctx.fillStyle='#fff'; ctx.fill(); }
+        }
+    }
+
+    function triggerMiss(text) {
+        if (!waveMissed) {
+            waveMissed = true;
+            createFloatText(centerX, centerY - 80, text, "#f05");
+
+            notes.forEach(n => n.processed = true);
+        }
+    }
+
+    // --- 输入处理 ---
+    window.addEventListener('keydown', e => {
+        if (!waitingForAction) {
+            if (['Enter','Space','ArrowRight'].includes(e.code)) {
+                if (isTyping) finishTyping();
+                else advanceStep();
+            }
+            return;
+        }
+
+        if (KEYS_MAP.hasOwnProperty(e.code)) {
+            const lane = KEYS_MAP[e.code];
+            if(e.code==='Space') e.preventDefault();
+            
+            const now = Date.now() / 1000;
+            // 判定窗口 0.3s
+            const note = notes.find(n => !n.processed && !n.headHit && n.lane === lane && Math.abs(n.time - now) < 0.3);
+            
+            if (note) {
+                note.headHit = true;
+                createExplosion(lane);
+                
+                if (note.duration > 0) {
+                    note.holding = true;
+                } else {
+                    note.processed = true;
+                    checkTaskCompletion();
+                }
+            }
+        }
+    });
+
+    window.addEventListener('keyup', e => {
+        const lane = KEYS_MAP[e.code];
+        if (lane !== undefined) {
+            const note = notes.find(n => n.holding && n.lane === lane);
+            if (note) {
+                note.holding = false;
+                note.processed = true; 
+                
+                const now = Date.now() / 1000;
+                // 【关键修复】过早松手判定：立即从数组移除，防止飞出去
+                if (now < note.time + note.duration - 0.2) {
+                    triggerMiss("TOO EARLY!");
+                    // 立即移除该音符
+                    const idx = notes.indexOf(note);
+                    if(idx > -1) notes.splice(idx, 1);
+                } else {
+                    checkTaskCompletion();
+                }
+            }
+        }
+    });
+
+    document.body.addEventListener('click', () => {
+        if (!waitingForAction) {
+            if (isTyping) finishTyping();
+            else advanceStep();
+        }
+    });
+
+    function checkTaskCompletion() {
+        const allDone = notes.every(n => n.processed);
+        if (allDone && notes.length > 0) {
+            if (!waveMissed) {
+                practiceCount++;
+                const currentStep = SCRIPT[stepIndex];
+                updateTaskText(currentStep.text);
+                createFloatText(centerX, centerY + 80, `OK! ${practiceCount}/${currentTargetCount}`, "#0f0");
+            }
+            notes = []; 
+        }
+    }
+
+    function exitTutorial() {
+        window.location.href = "game.html";
+    }
+
+    // --- 粒子系统 ---
+    function createExplosion(lane) {
+        let x, y, color = LANE_COLORS[lane];
+        if(lane===4) { x=centerX; y=centerY; }
+        else {
+            const ang = LANE_ANGLES[lane];
+            x = centerX + Math.cos(ang)*HIT_RADIUS;
+            y = centerY + Math.sin(ang)*HIT_RADIUS;
+        }
+        for(let i=0; i<8; i++) particles.push({ x, y, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, life:1, color, type:'spark' });
+    }
+    
+    function createFloatText(x, y, text, color) {
+        particles.push({ x, y, text, color, life: 1.0, type: 'text' });
+    }
+
+    function updateParticles() {
+        for(let i=particles.length-1; i>=0; i--) {
+            let p = particles[i];
+            if (p.type === 'spark') {
+                p.x+=p.vx; p.y+=p.vy; p.life-=0.05;
+                ctx.globalAlpha=p.life; ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,4,4);
+            } 
+            else if (p.type === 'text') {
+                p.y -= 1; p.life -= 0.02;
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.fillStyle = p.color;
+                ctx.font = "bold 30px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(p.text, p.x, p.y);
+                ctx.strokeStyle = "black"; ctx.lineWidth = 1; ctx.strokeText(p.text, p.x, p.y);
+            }
+            if(p.life<=0) particles.splice(i,1);
+        }
+        ctx.globalAlpha=1;
+    }
+
+    setPortrait("smile");
+    portrait.classList.add("show");
+
+    document.getElementById('dialogue-text').innerText = SCRIPT[0].text;
+    loop();
+
+</script>
+</body>
+</html>

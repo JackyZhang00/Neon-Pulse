@@ -316,13 +316,15 @@
       "easy": 3,
       "normal": 5,
       "hard": 4,
-      "expert": 8
+      "expert": 8,
+      "phone":6
     },
     "charts": {
       "easy": null,
       "normal": null,
       "hard": null,
-      "expert": "assets/転生林檎/expert.json"
+      "expert": "assets/転生林檎/expert.json",
+      "master": "assets/転生林檎/phone.json"
     }
   },
   {
@@ -341,13 +343,15 @@
       "easy": 3,
       "normal": 6,
       "hard": 8,
-      "expert": 10
+      "expert": 10,
+      "master": 10
     },
     "charts": {
       "easy": null,
       "normal": "assets/Requiem for Fate/normal.json",
       "hard": "assets/Requiem for Fate/hard.json",
-      "expert": "assets/Requiem for Fate/expert.json"
+      "expert": "assets/Requiem for Fate/expert.json",
+      "master":"assets/Requiem for Fate/master.json"
     }
   },
   {
@@ -373,6 +377,56 @@
       "normal": null,
       "hard": null,
       "expert": "assets/闇の魔法少女/expert.json"
+    }
+  },
+  {
+    "id": "スカーレット警察のゲットーパトロール24時",
+    "title": "スカーレット警察のゲットーパトロール24時",
+    "artist": "miko、ココ、岩杉夏、黑田椋子(96)",
+    "charter": "Nana_Chan（SR Atelier）",
+    "lyricist":"七条レタス(IOSYS)",
+    "composer":"ZUN",
+    "arranger":"D.watt (IOSYS)",
+    "tags": ["东方Project", "Official"],
+    "cover": "assets/スカーレット警察のゲットーパトロール24時/cover.png",
+    "audio": "assets/スカーレット警察のゲットーパトロール24時/song.mp3",
+    "preview_start": 26,
+    "levels": {
+      "easy": 3,
+      "normal": 6,
+      "hard": 8,
+      "expert": 8
+    },
+    "charts": {
+      "easy": null,
+      "normal": "assets/スカーレット警察のゲットーパトロール24時/normal.json",
+      "hard": "assets/スカーレット警察のゲットーパトロール24時/hard.json",
+      "expert": "assets/スカーレット警察のゲットーパトロール24時/expert.json"
+    }
+  },
+  {
+    "id": "チルノのパーフェクトさんすう教室",
+    "title": "チルノのパーフェクトさんすう教室",
+    "artist": "miko",
+    "charter": "Nana_Chan（SR Atelier）",
+    "lyricist":"夕野ヨシミ",
+    "composer":"ZUN",
+    "arranger":"ARM",
+    "tags": ["东方Project", "Official"],
+    "cover": "assets/チルノのパーフェクトさんすう教室/cover.png",
+    "audio": "assets/チルノのパーフェクトさんすう教室/song.mp3",
+    "preview_start": 24,
+    "levels": {
+      "easy": 3,
+      "normal": 6,
+      "hard": 8,
+      "expert": 7
+    },
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert": "assets/チルノのパーフェクトさんすう教室/expert.json"
     }
   }
 ]

@@ -83,6 +83,14 @@
       "title": "新生日志",
       "cost": 450,
       "src": "stories/s010.txt"
+    },
+    {
+      "id": "s013",
+      "type": "story",
+      "title": "日志编号：#404",
+      "cost": 450,
+      "require":"master",
+      "src": "stories/s013.txt"
     }
   ],
   "gallery": [
