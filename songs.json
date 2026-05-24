@@ -428,5 +428,30 @@
       "hard": null,
       "expert": "assets/チルノのパーフェクトさんすう教室/expert.json"
     }
+  },
+  {
+    "id": "快乐的扑满（FULL）",
+    "title": "快乐的扑满（FULL）",
+    "artist": "邵丽棠",
+    "charter": "Nana_Chan（SR Atelier）",
+    "lyricist":"许绍荣",
+    "composer":"邵丽棠",
+    "arranger":"花道",
+    "tags": ["华语", "Official"],
+    "cover": "assets/快乐的扑满（FULL）/cover.png",
+    "audio": "assets/快乐的扑满（FULL）/song.mp3",
+    "preview_start": 50,
+    "levels": {
+      "easy": 3,
+      "normal": 6,
+      "hard": 8,
+      "expert": 7
+    },
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert": "assets/快乐的扑满（FULL）/expert.json"
+    }
   }
 ]
