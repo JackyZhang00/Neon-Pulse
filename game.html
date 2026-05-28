@@ -418,6 +418,44 @@ canvas { display: block; position: relative; z-index: 1; }
     background: linear-gradient(90deg, rgba(0,255,255,0.2), transparent);
     border-left: 4px solid #0ff;
 }
+.song-level-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 7px;
+}
+.song-level-badge {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    background: rgba(255,255,255,0.04);
+    font-family: monospace;
+}
+.song-level-badge.easy {
+    color: #00ccff;
+    box-shadow: 0 0 6px rgba(0,204,255,0.25);
+}
+.song-level-badge.normal {
+    color: #00ff66;
+    box-shadow: 0 0 6px rgba(0,255,102,0.25);
+}
+.song-level-badge.hard {
+    color: #ffcc00;
+    box-shadow: 0 0 6px rgba(255,204,0,0.25);
+}
+.song-level-badge.expert {
+    color: #ff4444;
+    box-shadow: 0 0 6px rgba(255,68,68,0.25);
+}
+.song-level-badge.master {
+    color: #fff;
+    border-color: #ff66ff;
+    background: linear-gradient(90deg, rgba(255,102,255,0.3), rgba(0,204,255,0.22));
+    box-shadow: 0 0 8px rgba(255,102,255,0.45);
+}
 .song-info-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .cover-art {
     width: 300px; height: 300px; object-fit: cover;
@@ -451,6 +489,52 @@ canvas { display: block; position: relative; z-index: 1; }
 }
 .diff-btn[data-diff="master"]:hover{
     box-shadow:0 0 10px #ff66ff;
+}
+
+/* 星级难度筛选 */
+#difficulty-filter-bar {
+    height: 42px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+.star-filter-label {
+    color: #666;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-right: 4px;
+    white-space: nowrap;
+}
+
+.star-filter-btn {
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid #555;
+    background: transparent;
+    color: #aaa;
+    cursor: pointer;
+    white-space: nowrap;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.star-filter-btn:hover {
+    border-color: #ffd700;
+    color: #ffd700;
+    background: rgba(255,215,0,0.08);
+}
+
+.star-filter-btn.active {
+    background: #ffd700;
+    color: #000;
+    border-color: #ffd700;
+    box-shadow: 0 0 12px rgba(255,215,0,0.45);
 }
 
 /* MASTER 教程按钮 */
@@ -702,7 +786,22 @@ canvas { display: block; position: relative; z-index: 1; }
 .col-item-card:hover  { background: #2a2a2a; border-color: #555; }
 .col-item-card.active { border-color: #aa00ff; background: rgba(170,0,255,0.1); }
 .col-item-card.locked { opacity: 0.6; }
-.lock-icon   { font-size: 12px; background: #333; padding: 2px 6px; border-radius: 4px; color: #aaa; }
+.lock-icon {
+    font-size: 12px;
+    background: #333;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #aaa;
+}
+.lock-icon.free {
+    background: #00ffaa;
+    color: #000;
+    box-shadow: 0 0 10px rgba(0,255,170,0.45);
+    font-weight: 900;
+}
+.lock-icon:has-text("FREE") {
+    color: #000;
+}
 .col-item-info h4 { margin: 0 0 5px 0; font-size: 16px; color: #eee; }
 .col-item-info p  { margin: 0; font-size: 12px; color: #888; }
 .detail-placeholder { color: #555; font-size: 18px; letter-spacing: 1px; }
@@ -1092,6 +1191,8 @@ Logo 开场页（最先显示）
     </button>
 
     <div id="category-bar"></div>
+    <!-- 星级筛选 -->
+    <div id="difficulty-filter-bar"></div>
 
     <div class="content-wrapper">
         <div class="song-list-panel" id="song-list-container"></div>
@@ -1222,6 +1323,15 @@ Logo 开场页（最先显示）
                 <span id="speed-val" style="width:35px;text-align:right;">2.0</span>
             </div>
             <div class="setting-row">
+                <span>
+                    Scroll Mode（流速模式）
+                </span>
+                <select id="scroll-mode-select">
+                    <option value="constant">CONSTANT / 恒定流速</option>
+                    <option value="variable">DYNAMIC / 由慢到快</option>
+                </select>
+            </div>
+            <div class="setting-row">
                 <span>Input Mode (按键)</span>
                 <select id="input-mode-select">
                     <option value="arrow">Arrow Keys (↑→↓←)</option>
@@ -1233,6 +1343,16 @@ Logo 开场页（最先显示）
             <div class="setting-row">
                 <span>Auto Play (演示模式)</span>
                 <input type="checkbox" id="auto-mode-check">
+            </div>
+            <div class="setting-row">
+                <span>
+                    Input Strip（读谱提示条）
+                    <div id="input-strip-hint"
+                         style="font-size:11px;color:#666;margin-top:3px;font-weight:normal;">
+                        仅 HARD / EXPERT 难度可用
+                    </div>
+                </span>
+                <input type="checkbox" id="input-strip-check">
             </div>
             <div class="setting-row">
                 <span>Character (立绘选择)</span>
@@ -1378,15 +1498,19 @@ Logo 开场页（最先显示）
      ============================================================ -->
 <div id="update-modal" class="overlay" style="display:none;z-index:100;">
     <div id="update-box">
-        <div class="update-header">System Update // V1.6.0_alpha</div>
+        <div class="update-header">System Update // V1.7.0_alpha</div>
         <div class="update-content">
             <div class="update-list-item">
-                <span class="update-tag">NEW</span><strong>歌曲信息卡</strong><br>
-                <span style="color:#aaa;">开始游戏前将展示歌曲详细信息（作词/作曲/编曲/制谱/演唱），5秒后自动进入</span>
+                <span class="update-tag">NEW</span><strong>星级筛选系统</strong><br>
+                <span style="color:#aaa;">可以选择特定难度的曲目游玩</span>
             </div>
             <div class="update-list-item">
-                <span class="update-tag">NEW</span><strong>数据导入导出</strong><br>
-                <span style="color:#aaa;">可在设置 → DATA 中导出/导入存档，方便跨设备游玩</span>
+                <span class="update-tag">NEW</span><strong>读谱提示条</strong><br>
+                <span style="color:#aaa;">对于过难曲目，可以在设置中开启“读谱提示条”方便读谱</span>
+            </div>
+            <div class="update-list-item">
+                <span class="update-tag">NEW</span><strong>流速模式设置</strong><br>
+                <span style="color:#aaa;">可以选择恒定流速谱面或变速谱面游玩</span>
             </div>
         </div>
         <div style="text-align:center;">
@@ -1495,9 +1619,24 @@ const KEYS_MAP = {
 const JUDGE = { CRITICAL:0.04, PERFECT:0.08, GOOD:0.2, BAD:0.32, TRAP:0.35 };
 const CLEAR_THRESHOLDS = { easy:600000, normal:600000, hard:700000, expert:800000, master:800000 };
 const DIFF_MAX_STARS   = { easy:5, normal:7, hard:8, expert:10, master:10 };
+const DIFF_ORDER = ['easy', 'normal', 'hard', 'expert', 'master'];
+const LANE_LABELS = ['↑', '→', '↓', '←', 'SP', '↗', '↘', '↙', '↖'];
+// 辅助距离环，帮助判断音符离判定点的进度
+const GUIDE_RING_RATIOS = [0.25, 0.5, 0.75];
+const INPUT_STRIP_LOOKAHEAD = 1.25;
+// 多押判定：时间差小于这个值的音符会被视为同一组
+const INPUT_GROUP_EPS = 0.045;
+// 长按条最小显示宽度，避免太短看不清
+const HOLD_MIN_WIDTH = 28;
+const INPUT_STRIP_BASE_H = 68;
+const INPUT_STRIP_CHORD_ROW_GAP = 22;
+const INPUT_STRIP_MAX_ROWS = 5;
+const INPUT_STRIP_PAST = 0.12;      // 音符过判定线后保留一小段
+const INPUT_STRIP_ROW_H = 22;       // 每一行高度
+
 const CLEAR_TYPE       = { NONE:0, FAILED:1, CLEAR:2, FC:3, AP:4, AC:5 };
 
-const CURRENT_VERSION_KEY = 'V1.6.0_alpha';
+const CURRENT_VERSION_KEY = 'V1.7.0_alpha';
 
 /* ============================================================
    DataManager 模块（新功能2）—— 导入 / 导出 / 重置
@@ -1771,6 +1910,11 @@ const Settings = (() => {
         speed: 2.0, inputMode: 'arrow', offset: 0,
         devMode: false, autoMode: false,
         hitSound: true, hitSoundPack: 'mp3',
+        scrollMode: 'constant',
+
+        // 新增：下方读谱提示条总开关
+        inputStripEnabled: true,
+
         bgmVolume: 0.8, sfxVolume: 0.8,
         autoSpace: false, selectedChar: 'nana',
         autoArrows: { up:false, right:false, down:false, left:false,ur:false, dr:false, dl:false, ul:false },
@@ -1794,6 +1938,17 @@ const Settings = (() => {
             a.up || a.right || a.down || a.left ||
             a.ur || a.dr || a.dl || a.ul
         );
+    }
+
+    function _updateInputStripHint() {
+        const el = document.getElementById('input-strip-hint');
+        if (!el) return;
+
+        if (data.masterUnlocked) {
+            el.innerText = '仅 HARD / EXPERT / MASTER 难度可用';
+        } else {
+            el.innerText = '仅 HARD / EXPERT 难度可用';
+        }
     }
 
     function initUI() {
@@ -1823,6 +1978,8 @@ const Settings = (() => {
         bindRange('bgm-vol-input', 'bgmVolume', 'bgm-vol-val',  2);
         bindRange('sfx-vol-input', 'sfxVolume', 'sfx-vol-val',  2);
         bindCheck('auto-mode-check', 'autoMode');
+        bindCheck('input-strip-check', 'inputStripEnabled');
+        _updateInputStripHint();
         bindCheck('hitsound-check',  'hitSound');
         bindCheck('auto-space-check','autoSpace');
         bindCheck('dev-mode-check',  'devMode');
@@ -1917,6 +2074,7 @@ const Settings = (() => {
                 if (pwd === 'NANA1207') {
                     data.masterUnlocked = true;
                     save();
+                    _updateInputStripHint();
                     showMasterUnlockAnimation();
                     refreshInputModeOptions();
                     unlockBtn.classList.add('success');
@@ -2222,22 +2380,58 @@ const Collection = (() => {
         selectedItem=null;
     }
     function _canShowItem(item) {
-        const settings = Settings.get();    
-        const inv = Inventory.get();
-
-        if (!item.require) return true;
-
-        switch (item.require) {
-            case 'master':
-                return settings.masterUnlocked;
-            // 日期限定条件
-            case 'date_1207': {
-                const now = new Date();
-                return now.getMonth() === 11 && now.getDate() === 7; // 12月7日
-            }
-            default:
-                return true;
+    const settings = Settings.get();
+    // 新增：未到开放日期时，直接不可见
+    if (!_isInVisibleDateRange(item)) return false;
+    if (!item.require) return true;
+    switch (item.require) {
+        case 'master':
+            return settings.masterUnlocked;
+        // 保留你原来的指定日期当天可见逻辑
+        case 'date_1207': {
+            const now = new Date();
+            return now.getMonth() === 11 && now.getDate() === 7;
         }
+        default:
+            return true;
+    }
+}
+    function _todayYMD() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    function _isInVisibleDateRange(item) {
+        const today = _todayYMD();
+        if (item.visibleFrom && today < item.visibleFrom) return false;
+        if (item.visibleUntil && today > item.visibleUntil) return false;
+        return true;
+    }
+
+    function _isFreeNow(item) {
+        if (!item.freeFrom || !item.freeUntil) return false;
+
+        const today = _todayYMD();
+
+        // 字符串 YYYY-MM-DD 可以直接比较大小
+        return today >= item.freeFrom && today <= item.freeUntil;
+    }
+
+    function _getItemCost(item) {
+        return _isFreeNow(item) ? 0 : (Number(item.cost) || 0);
+    }
+
+    function _freePeriodText(item) {
+        if (!_isFreeNow(item)) return '';
+
+        if (item.freeFrom === item.freeUntil) {
+            return `限时免费 今日`;
+        }
+
+        return `限时免费 ${item.freeFrom} ~ ${item.freeUntil}`;
     }
     function _renderList() {
         const c = document.getElementById('collection-list-container');
@@ -2246,14 +2440,19 @@ const Collection = (() => {
             .filter(item => _canShowItem(item))
             .forEach(item => {
                 const ok = Inventory.isUnlocked(item.id);
+                const freeNow = _isFreeNow(item);
+
                 const div = document.createElement('div');
                 div.className = `col-item-card ${ok ? '' : 'locked'}`;
+
                 div.innerHTML = `
                     <div class="col-item-info">
                         <h4>${item.title}</h4>
-                        <p>${ok ? 'DECRYPTED' : 'ENCRYPTED'}</p>
+                        <p>
+                            ${ok ? 'DECRYPTED' : (freeNow ? 'LIMITED FREE' : 'ENCRYPTED')}
+                        </p>
                     </div>
-                    ${!ok ? '<span class="lock-icon">🔒</span>' : ''}
+                    ${!ok ? `<span class="lock-icon ${freeNow ? 'free' : ''}">${freeNow ? 'FREE' : '🔒'}</span>` : ''}
                 `;
                 div.onclick = () => _selectItem(item, div, ok);
                 c.appendChild(div);
@@ -2276,17 +2475,47 @@ const Collection = (() => {
                 c.innerHTML=`<div class="detail-view" style="align-items:center;"><div class="detail-title">${item.title}</div><img class="detail-image" src="${item.src}" onclick="ImageViewer.open('${item.src}')"><div style="font-size:12px;color:#666;">CLICK TO EXPAND</div></div>`;
             }
         } else {
-            const can=Inventory.canAfford(item.cost);
-            c.innerHTML=`<div class="detail-view" style="justify-content:center;align-items:center;text-align:center;"><div style="font-size:60px;">🔒</div><div class="detail-title">FILE ENCRYPTED</div><p style="color:#888;">Spend Fragments to decrypt.</p><div class="unlock-area"><span class="frag-cost">COST: ${item.cost} FRAGMENTS</span><button class="unlock-btn" onclick="Collection.unlockCurrent()" ${can?'':'disabled'}>${can?'DECRYPT NOW':'INSUFFICIENT DATA'}</button></div></div>`;
+            const cost = _getItemCost(item);
+            const freeNow = _isFreeNow(item);
+            const can = freeNow || Inventory.canAfford(cost);
+            const costText = freeNow
+                ? _freePeriodText(item)
+                : `COST: ${cost} FRAGMENTS`;
+            const descText = freeNow
+                ? 'This file can be decrypted for free during the event period.'
+                : 'Spend Fragments to decrypt.';
+            const btnText = freeNow
+                ? '免费领取'
+                : (can ? 'DECRYPT NOW' : 'INSUFFICIENT DATA');
+            c.innerHTML = `
+                <div class="detail-view" style="justify-content:center;align-items:center;text-align:center;">
+                    <div style="font-size:60px;">${freeNow ? '🎁' : '🔒'}</div>
+                    <div class="detail-title">${freeNow ? 'LIMITED FREE ACCESS' : 'FILE ENCRYPTED'}</div>
+                    <p style="color:#888;">${descText}</p>
+                    <div class="unlock-area">
+                        <span class="frag-cost">${costText}</span>
+                        <button class="unlock-btn" onclick="Collection.unlockCurrent()" ${can ? '' : 'disabled'}>
+                            ${btnText}
+                        </button>
+                    </div>
+                </div>
+            `;
         }
     }
     function unlockCurrent() {
-        if (!selectedItem||!Inventory.canAfford(selectedItem.cost)) return;
-        Inventory.spend(selectedItem.cost); Inventory.unlockItem(selectedItem.id);
-        _renderList(); switchTab(currentTab);
+        if (!selectedItem) return;
+        const cost = _getItemCost(selectedItem);
+        const freeNow = _isFreeNow(selectedItem);
+        if (!freeNow && !Inventory.canAfford(cost)) return;
+        if (!freeNow && cost > 0) {
+            Inventory.spend(cost);
+        }
+        Inventory.unlockItem(selectedItem.id);
+        _renderList();
+        switchTab(currentTab);
     }
-    return { init, open, close, switchTab, unlockCurrent };
-})();
+        return { init, open, close, switchTab, unlockCurrent };
+    })();
 
 /* ============================================================
    ImageViewer 模块
@@ -2438,6 +2667,12 @@ const Particles = (() => {
    ============================================================ */
 const Game = (() => {
     let notes=[], events=[], audioBuffer=null, startTime=0;
+    let inputStripAlpha = 0;
+
+    // 谱面节拍线
+    let timingPoints = [{ time: 0, bpm: 120 }];
+    let beatTimes = [];
+
     let animFrameId=null, isPlaying=false, isPaused=false, isCountingDown=false;
     let shakeIntensity=0, bgFlash=0;
     let stats={}, totalScoreUnit=0;
@@ -2485,6 +2720,78 @@ const Game = (() => {
     }
     function _now(){ return (AudioManager.ctx.currentTime-startTime)-(Settings.get().offset/1000); }
 
+    function _clamp(v, min, max){
+        return Math.max(min, Math.min(max, v));
+    }
+    // 线性进度：0（刚出现，圆心） -> 1（到判定圈）
+    function _linearProgress(deltaToHit, travel){
+        return _clamp(1 - deltaToHit / travel, 0, 1);
+    }
+    // 非线性映射：越靠近圆心越慢，越往外越快
+    // 推荐先用 easeInQuad，手感自然，也比较稳
+    function _motionRadius(deltaToHit, travel){
+        const t = _linearProgress(deltaToHit, travel);
+
+        // CONSTANT：最开始的线性流速，圆心和外圈一样快
+        if (Settings.get().scrollMode === 'constant') {
+            return t * HIT_RADIUS;
+        }
+
+        // DYNAMIC：现在的变化流速，靠近圆心慢，越往外越快
+        return t * t * HIT_RADIUS;
+    }
+    function _buildBeatTimes(){
+        beatTimes = [];
+        const points = timingPoints.length
+            ? timingPoints
+            : [{ time: 0, bpm: 120 }];
+        const lastNoteTime = notes.reduce((m, n) => {
+            return Math.max(m, n.time + (n.duration || 0));
+        }, 0);
+        const endTime = Math.max(
+            audioBuffer?.duration || 0,
+            lastNoteTime + 4
+        );
+        for(let i = 0; i < points.length; i++){
+            const cur = points[i];
+            const next = points[i + 1];
+            const start = Math.max(0, cur.time);
+            const end = next ? next.time : endTime;
+            const interval = 60 / (cur.bpm || 120);
+            for(let t = start; t <= end; t += interval){
+                if(t >= 0 && t <= endTime){
+                    beatTimes.push({
+                        time: Number(t.toFixed(6)),
+                        bpm: cur.bpm,
+                        timingIndex: i
+                    });
+                }
+            }
+        }
+        // 防止 timingPoint 边界附近重复
+        beatTimes.sort((a, b) => a.time - b.time);
+        beatTimes = beatTimes.filter((b, i, arr) => {
+            return i === 0 || Math.abs(b.time - arr[i - 1].time) > 0.001;
+        });
+    }
+    function _drawBeatGuides(cx, cy, now, travel){
+        if(!beatTimes.length) return;
+        beatTimes.forEach((beat, index) => {
+            const dh = beat.time - now;
+            if(dh < 0 || dh > travel) return;
+            const r = _motionRadius(dh, travel);
+            if(r <= 0 || r > HIT_RADIUS) return;
+            const isStrong = index % 4 === 0;
+            CTX.beginPath();
+            CTX.arc(cx, cy, r, 0, Math.PI * 2);
+            CTX.strokeStyle = isStrong
+                ? 'rgba(220,220,220,0.26)'
+                : 'rgba(180,180,180,0.16)';
+            CTX.lineWidth = isStrong ? 2 : 1;
+            CTX.stroke();
+        });
+    }
+
     function _loop(){
         if(!isPlaying||isPaused||isCountingDown) return;
         animFrameId=requestAnimationFrame(_loop);
@@ -2526,6 +2833,258 @@ const Game = (() => {
         document.getElementById('score-display').innerText=stats.score.toString().padStart(7,'0');
     }
 
+    
+
+    function _drawStripJudgeLine(axisX, axisW, stripY, h) {
+        const pxPerSec = axisW / INPUT_STRIP_LOOKAHEAD;
+        // 判定窗口宽度，按现有 JUDGE 配置换算成像素
+        const badW = (JUDGE.BAD || 0.15) * pxPerSec;
+        const goodW = (JUDGE.GOOD || 0.09) * pxPerSec;
+        const perfectW = (JUDGE.PERFECT || 0.05) * pxPerSec;
+        CTX.save();
+        // BAD / GOOD / PERFECT 判定区：从判定线向右展开
+        // 因为提示条只显示未来音符，所以主要画右侧提前按窗口
+        CTX.fillStyle = 'rgba(255,0,85,0.08)';
+        CTX.fillRect(axisX, stripY - h / 2 + 6, badW, h - 12);
+        CTX.fillStyle = 'rgba(255,204,0,0.10)';
+        CTX.fillRect(axisX, stripY - h / 2 + 6, goodW, h - 12);
+        CTX.fillStyle = 'rgba(0,255,255,0.14)';
+        CTX.fillRect(axisX, stripY - h / 2 + 6, perfectW, h - 12);
+        // 主判定线
+        CTX.strokeStyle = '#0ff';
+        CTX.lineWidth = 3;
+        CTX.beginPath();
+        CTX.moveTo(axisX, stripY - h / 2 + 4);
+        CTX.lineTo(axisX, stripY + h / 2 - 4);
+        CTX.stroke();
+        // 判定线发光
+        CTX.strokeStyle = 'rgba(0,255,255,0.35)';
+        CTX.lineWidth = 7;
+        CTX.beginPath();
+        CTX.moveTo(axisX, stripY - h / 2 + 8);
+        CTX.lineTo(axisX, stripY + h / 2 - 8);
+        CTX.stroke();
+        // 顶部 HIT 标签
+        CTX.font = '900 9px monospace';
+        CTX.textAlign = 'center';
+        CTX.textBaseline = 'middle';
+        CTX.fillStyle = '#0ff';
+        CTX.fillText('HIT', axisX, stripY - h / 2 - 8);
+        // 底部小三角
+        CTX.fillStyle = '#0ff';
+        CTX.beginPath();
+        CTX.moveTo(axisX, stripY + h / 2 + 2);
+        CTX.lineTo(axisX - 6, stripY + h / 2 + 12);
+        CTX.lineTo(axisX + 6, stripY + h / 2 + 12);
+        CTX.closePath();
+        CTX.fill();
+        CTX.restore();
+    }
+
+    function _getStripRows() {
+        const isMaster = SongSelect.selectedDiff() === 'master';
+        // 不用颜色，不强调方向，只把每个按键固定成一行
+        if (isMaster) {
+            return [
+                { lane: 0, label: 'UP' },
+                { lane: 5, label: 'UR' },
+                { lane: 1, label: 'RIGHT' },
+                { lane: 6, label: 'DR' },
+                { lane: 2, label: 'DOWN' },
+                { lane: 7, label: 'DL' },
+                { lane: 3, label: 'LEFT' },
+                { lane: 8, label: 'UL' },
+                { lane: 4, label: 'SPACE' }
+            ];
+        }
+        return [
+            { lane: 0, label: 'UP' },
+            { lane: 1, label: 'RIGHT' },
+            { lane: 2, label: 'DOWN' },
+            { lane: 3, label: 'LEFT' },
+            { lane: 4, label: 'SPACE' }
+        ];
+    }
+
+    function _isInputStripAvailable() {
+        const diff = SongSelect.selectedDiff();
+        const s = Settings.get();
+
+        if (!s.inputStripEnabled) return false;
+
+        if (diff === 'hard') return true;
+        if (diff === 'expert') return true;
+
+        // MASTER 必须解锁后才允许提示条
+        if (diff === 'master') return !!s.masterUnlocked;
+
+        // easy / normal 永远不显示
+        return false;
+    }
+
+    function _drawInputStrip(cx, cy, now) {
+        const rows = _getStripRows();
+        const visibleNotes = notes.filter(n => {
+            if (n.processed) return false;
+            const start = n.time;
+            const end = n.time + (n.duration || 0);
+            if (end < now - INPUT_STRIP_PAST) return false;
+            if (start > now + INPUT_STRIP_LOOKAHEAD) return false;
+            return true;
+        });
+
+        // 有音符时淡入，没有音符时淡出
+        const enabled = _isInputStripAvailable();
+        const targetAlpha = enabled && visibleNotes.length ? 1 : 0;
+        inputStripAlpha += (targetAlpha - inputStripAlpha) * 0.16;
+
+        // 几乎完全透明时不再绘制
+        if (inputStripAlpha < 0.015) return;
+        const stripY = cy + HIT_RADIUS + 92;
+        const startX = cx - 330;
+        const width = 660;
+        const titleW = 78;
+        const axisX = startX + titleW;
+        const axisW = width - titleW - 24;
+        const rowH = INPUT_STRIP_ROW_H;
+        const h = 42 + rows.length * rowH;
+        const top = stripY - h / 2;
+        const rowTop = top + 30;
+        function timeToX(t) {
+            const p = (t - now) / INPUT_STRIP_LOOKAHEAD;
+            // 允许音符越过 HIT 线一点点，表现“已经晚了”
+            const leftOverflow = -INPUT_STRIP_PAST / INPUT_STRIP_LOOKAHEAD;
+            return axisX + _clamp(p, leftOverflow, 1) * axisW;
+        }
+        function laneToY(lane) {
+            const idx = rows.findIndex(r => r.lane === lane);
+            if (idx < 0) return null;
+            return rowTop + idx * rowH + rowH / 2;
+        }
+        CTX.save();
+        CTX.globalAlpha *= inputStripAlpha;
+        // 背景窗口
+        CTX.fillStyle = 'rgba(0,0,0,0.55)';
+        CTX.strokeStyle = 'rgba(255,255,255,0.14)';
+        CTX.lineWidth = 1;
+        CTX.beginPath();
+        if (CTX.roundRect) {
+            CTX.roundRect(startX, top, width, h, 18);
+            CTX.fill();
+            CTX.stroke();
+        } else {
+            CTX.fillRect(startX, top, width, h);
+            CTX.strokeRect(startX, top, width, h);
+        }
+        // 标题
+        CTX.font = '900 11px monospace';
+        CTX.textAlign = 'left';
+        CTX.textBaseline = 'middle';
+        CTX.fillStyle = 'rgba(255,255,255,0.45)';
+        CTX.fillText('NEXT', startX + 14, top + 15);
+        // HIT 判定线
+        CTX.strokeStyle = '#0ff';
+        CTX.lineWidth = 3;
+        CTX.beginPath();
+        CTX.moveTo(axisX, rowTop - 6);
+        CTX.lineTo(axisX, rowTop + rows.length * rowH - rowH / 2 + 6);
+        CTX.stroke();
+        CTX.font = '900 9px monospace';
+        CTX.textAlign = 'center';
+        CTX.fillStyle = '#0ff';
+        CTX.fillText('HIT', axisX, top + 15);
+        // 判定窗口淡色区
+        const pxPerSec = axisW / INPUT_STRIP_LOOKAHEAD;
+        const badW = (JUDGE.BAD || 0.15) * pxPerSec;
+        const goodW = (JUDGE.GOOD || 0.09) * pxPerSec;
+        const perfectW = (JUDGE.PERFECT || 0.05) * pxPerSec;
+        CTX.fillStyle = 'rgba(255,0,85,0.05)';
+        CTX.fillRect(axisX, rowTop - 6, badW, rows.length * rowH + 2);
+        CTX.fillStyle = 'rgba(255,204,0,0.06)';
+        CTX.fillRect(axisX, rowTop - 6, goodW, rows.length * rowH + 2);
+        CTX.fillStyle = 'rgba(0,255,255,0.08)';
+        CTX.fillRect(axisX, rowTop - 6, perfectW, rows.length * rowH + 2);
+        // 每个按键一行
+        rows.forEach((row, i) => {
+            const y = rowTop + i * rowH + rowH / 2;
+            // 左侧标签
+            CTX.font = '900 10px monospace';
+            CTX.textAlign = 'right';
+            CTX.textBaseline = 'middle';
+            CTX.fillStyle = 'rgba(255,255,255,0.65)';
+            CTX.fillText(row.label, axisX - 12, y);
+            // 轨道底线
+            CTX.strokeStyle = 'rgba(255,255,255,0.10)';
+            CTX.lineWidth = 1;
+            CTX.beginPath();
+            CTX.moveTo(axisX, y);
+            CTX.lineTo(axisX + axisW, y);
+            CTX.stroke();
+        });
+        // 绘制音符
+        visibleNotes.forEach(n => {
+            if (n.processed) return;
+            const start = n.time;
+            const end = n.time + (n.duration || 0);
+            // 只画窗口内或与窗口相交的音符/长按
+            if (end < now - INPUT_STRIP_PAST) return;
+            if (start > now + INPUT_STRIP_LOOKAHEAD) return;
+            const y = laneToY(n.lane);
+            if (y === null) return;
+            const isHold = (n.duration || 0) > 0;
+            const x = timeToX(start);
+            const color = LANE_COLORS[n.lane] || '#fff';
+            if (isHold) {
+                const x1 = timeToX(Math.max(start, now - INPUT_STRIP_PAST));
+                const x2 = timeToX(end);
+                const barX = Math.min(x1, x2);
+                const barW = Math.max(HOLD_MIN_WIDTH, Math.abs(x2 - x1));
+                CTX.save();
+                CTX.globalAlpha = n.holding ? 0.95 : 0.78;
+                CTX.fillStyle = 'rgba(255,255,255,0.18)';
+                CTX.strokeStyle = color;
+                CTX.lineWidth = n.holding ? 3 : 2;
+                CTX.beginPath();
+                if (CTX.roundRect) {
+                    CTX.roundRect(barX, y - 6, barW, 12, 6);
+                    CTX.fill();
+                    CTX.stroke();
+                } else {
+                    CTX.fillRect(barX, y - 6, barW, 12);
+                    CTX.strokeRect(barX, y - 6, barW, 12);
+                }
+                // 起点音符头：保留轨道颜色
+                CTX.beginPath();
+                CTX.arc(x, y, 8, 0, Math.PI * 2);
+                CTX.fillStyle = color;
+                CTX.fill();
+                CTX.strokeStyle = 'rgba(0,0,0,0.75)';
+                CTX.lineWidth = 2;
+                CTX.stroke();
+                // 正在按住时提示 HOLD
+                if (n.holding || start < now) {
+                    CTX.font = '900 8px monospace';
+                    CTX.textAlign = 'left';
+                    CTX.textBaseline = 'middle';
+                    CTX.fillStyle = 'rgba(255,255,255,0.75)';
+                    CTX.fillText('HOLD', Math.min(barX + barW + 6, axisX + axisW - 28), y);
+                }
+                CTX.restore();
+            } else {
+                // 普通点击音符：保留轨道颜色
+                CTX.beginPath();
+                CTX.arc(x, y, 8, 0, Math.PI * 2);
+                CTX.fillStyle = color;
+                CTX.fill();
+
+                CTX.strokeStyle = 'rgba(0,0,0,0.75)';
+                CTX.lineWidth = 2;
+                CTX.stroke();
+            }
+        });
+        CTX.restore();
+    }
+
     function _draw(cx,cy,now){
         // 绘制Master难度谱面
         const isMaster = SongSelect.selectedDiff() === 'master';
@@ -2540,8 +3099,22 @@ const Game = (() => {
             CTX.fill();
         }
 
-        const travel=3.0/Settings.get().speed;
-        CTX.beginPath();CTX.arc(cx,cy,HIT_RADIUS,0,6.28);CTX.lineWidth=3;CTX.strokeStyle='#fff';CTX.stroke();
+        const travel = 3.0 / Settings.get().speed;
+        // 先画拍线
+        _drawBeatGuides(cx, cy, now, travel);
+        // 再画判定圈
+        CTX.beginPath();
+        CTX.arc(cx, cy, HIT_RADIUS, 0, 6.28);
+        CTX.lineWidth = 3;
+        CTX.strokeStyle = '#fff';
+        CTX.stroke();
+
+        _drawGuideRings(cx, cy);
+        CTX.beginPath();
+        CTX.arc(cx, cy, HIT_RADIUS, 0, Math.PI * 2);
+        CTX.lineWidth = 3;
+        CTX.strokeStyle = '#fff';
+        CTX.stroke();
         const drawLanes = SongSelect.selectedDiff() === 'master'
             ? [0,1,2,3,5,6,7,8]   // 不绘制中心键 lane=4
             : [0,1,2,3];
@@ -2564,22 +3137,67 @@ const Game = (() => {
             CTX.strokeStyle = LANE_COLORS[i];
             CTX.lineWidth = 3;
             CTX.stroke();
+            _drawLaneLabel(cx, cy, i);
         });
         CTX.beginPath();CTX.arc(cx,cy,35,0,6.28);CTX.strokeStyle='rgba(214,0,255,0.4)';CTX.stroke();
         notes.forEach(n=>{
             if(n.processed)return;
-            const dh=n.time-now;
-            if(n.duration>0){
-                const dt=(n.time+n.duration)-now;
-                const rH=n.holding?HIT_RADIUS:(1-dh/travel)*HIT_RADIUS;
-                const rT=(1-dt/travel)*HIT_RADIUS;
-                if(rH>0&&rT<HIT_RADIUS){const s=Math.max(0,rT),e=Math.min(HIT_RADIUS,rH);if(e>s)_drawBody(cx,cy,n.lane,e,s);if(rT>0&&rT<=HIT_RADIUS)_drawHead(cx,cy,n.lane,rT,n.isSync);}
+            const dh = n.time - now;
+            if(n.duration > 0){
+                const dt = (n.time + n.duration) - now;
+                const rH = n.holding ? HIT_RADIUS : _motionRadius(dh, travel);
+                const rT = _motionRadius(dt, travel);
+                if(rH > 0 && rT < HIT_RADIUS){
+                    const s = Math.max(0, rT);
+                    const e = Math.min(HIT_RADIUS, rH);
+                    if(e > s) _drawBody(cx, cy, n.lane, e, s);
+                    if(rT > 0 && rT <= HIT_RADIUS) _drawHead(cx, cy, n.lane, rT, n.isSync);
+                }
             }
-            if(dh>travel||n.holding)return;
-            const r=(1-dh/travel)*HIT_RADIUS; if(r>0)_drawHead(cx,cy,n.lane,r,n.isSync);
+            if(dh > travel || n.holding)return;
+            const r = _motionRadius(dh, travel);
+            if(r > 0)_drawHead(cx, cy, n.lane, r, n.isSync);
         });
+        _drawInputStrip(cx, cy, now);
         Particles.update();
     }
+
+    // 读谱可视化
+    function _lanePos(cx, cy, lane, r = HIT_RADIUS) {
+        if (lane === 4) return { x: cx, y: cy };
+        const a = LANE_ANGLES[lane] ?? 0;
+        return {
+            x: cx + Math.cos(a) * r,
+            y: cy + Math.sin(a) * r
+        };
+    }
+    function _drawGuideRings(cx, cy) {
+        CTX.save();
+        CTX.setLineDash([4, 10]);
+        GUIDE_RING_RATIOS.forEach((ratio, idx) => {
+            CTX.beginPath();
+            CTX.arc(cx, cy, HIT_RADIUS * ratio, 0, Math.PI * 2);
+            CTX.strokeStyle = `rgba(255,255,255,${0.06 + idx * 0.025})`;
+            CTX.lineWidth = 1;
+            CTX.stroke();
+        });
+        CTX.setLineDash([]);
+        CTX.restore();
+    }
+    function _drawLaneLabel(cx, cy, lane) {
+        const p = _lanePos(cx, cy, lane, HIT_RADIUS + 34);
+        CTX.save();
+        CTX.font = lane === 4 ? '900 13px Arial' : '900 22px Arial';
+        CTX.textAlign = 'center';
+        CTX.textBaseline = 'middle';
+        CTX.lineWidth = 4;
+        CTX.strokeStyle = 'rgba(0,0,0,0.85)';
+        CTX.fillStyle = LANE_COLORS[lane] || '#fff';
+        CTX.strokeText(LANE_LABELS[lane] || '', p.x, p.y);
+        CTX.fillText(LANE_LABELS[lane] || '', p.x, p.y);
+        CTX.restore();
+    }
+
     function _drawBody(cx,cy,lane,rH,rT){
         const ang=LANE_ANGLES[lane]||0;
         if(lane===4){CTX.beginPath();CTX.arc(cx,cy,rH,0,6.28);CTX.arc(cx,cy,rT,0,6.28,true);CTX.fillStyle='rgba(214,0,255,0.3)';CTX.fill();}
@@ -2695,7 +3313,18 @@ const Game = (() => {
             } else {
                 tasks.push(
                     fetch(song.audio).then(r=>r.arrayBuffer()).then(b=>AudioManager.ctx.decodeAudioData(b)).then(d=>{audioBuffer=d;}),
-                    fetch(song.charts[diff]).then(r=>r.json()).then(data=>{notes=data.notes||[];events=data.events||[];})
+                    fetch(song.charts[diff]).then(r => r.json()).then(data => {
+                        notes = data.notes || [];
+                        events = data.events || [];
+                        timingPoints = Array.isArray(data.timingPoints) && data.timingPoints.length
+                            ? data.timingPoints
+                                .map(tp => ({
+                                    time: Number(tp.time) || 0,
+                                    bpm: Number(tp.bpm) || 120
+                                }))
+                                .sort((a, b) => a.time - b.time)
+                            : [{ time: 0, bpm: 120 }];
+                    })
                 );
             }
             const packId=Settings.get().hitSoundPack;
@@ -2711,11 +3340,12 @@ const Game = (() => {
 
         // 初始化
         _markSync();
+        _buildBeatTimes();
         notes.forEach(n=>{n.hit=false;n.processed=false;n.headHit=false;n.tailHit=false;n.holding=false;});
         events.forEach(e=>e.triggered=false);
         let maxJ=0; notes.forEach(n=>maxJ+=(n.duration>0?2:1));
         totalScoreUnit=1000000/(maxJ||1);
-        _resetStats(); Particles.clear(); shakeIntensity=0; bgFlash=0;
+        _resetStats(); Particles.clear(); shakeIntensity=0; bgFlash=0;inputStripAlpha = 0;
 
         document.getElementById('hud').style.display='block';
         document.getElementById('hud-title').innerText=song.title;
@@ -2763,7 +3393,7 @@ const Game = (() => {
     function backToMenu(){
         if(fireworkTimer){clearInterval(fireworkTimer);fireworkTimer=null;}
         Particles.clear(); AudioManager.stopBgm();
-        audioBuffer=null; notes=[]; events=[]; isPlaying=false;
+        audioBuffer=null; notes=[]; events=[]; isPlaying=false;inputStripAlpha = 0;
         cancelAnimationFrame(animFrameId);
         ['pause-menu','hud','result-screen','countdown-overlay','loading-overlay']
             .forEach(id=>document.getElementById(id).style.display='none');
@@ -2853,15 +3483,56 @@ const Game = (() => {
 /* ============================================================
    SongSelect 模块
    ============================================================ */
-const SongSelect = (() => {
+   const SongSelect = (() => {
     let songList=[], filteredList=[], _cur=null, _diff='normal';
+    let _activeTag = 'ALL';
+    let _starFilter = 'ALL';
+
+    const _DIFF_ORDER = ['easy', 'normal', 'hard', 'expert', 'master'];
     function currentSong()  { return _cur; }
     function selectedDiff() { return _diff; }
+    // 难度筛选
+    function _hasChart(song, diff) {
+    return !!(song?.charts?.[diff]) || (song?.id === 'demo' && diff === 'normal');
+    }
+    function _isDiffVisible(diff) {
+        return diff !== 'master' || Settings.get().masterUnlocked;
+    }
+    function _availableDiffs(song) {
+        return _DIFF_ORDER.filter(diff => _isDiffVisible(diff) && _hasChart(song, diff));
+    }
+    function _matchStar(song) {
+        if (_starFilter === 'ALL') return true;
+        const target = Number(_starFilter);
+        return _availableDiffs(song).some(diff => Number(song.levels?.[diff]) === target);
+    }
+    function _chooseDiffForSong(song) {
+        const diffs = _availableDiffs(song);
+        if (!diffs.length) return _diff;
+        if (_starFilter !== 'ALL') {
+            const hit = diffs.find(diff => Number(song.levels?.[diff]) === Number(_starFilter));
+            if (hit) return hit;
+        }
+        if (diffs.includes(_diff)) return _diff;
+        return diffs[0];
+    }
+    function _levelBadges(song) {
+        const diffs = _availableDiffs(song);
+        if (!diffs.length) {
+            return '<div class="song-level-row"><span class="song-level-badge">NO CHART</span></div>';
+        }
+        const html = diffs.map(diff => {
+            const lv = song.levels?.[diff] ?? '?';
+            return `<span class="song-level-badge ${diff}">${diff.toUpperCase()} ${lv}★</span>`;
+        }).join('');
+        return `<div class="song-level-row">${html}</div>`;
+    }
 
     async function init(){
         try{ const r=await fetch('songs.json'); songList=await r.json(); }
         catch(e){ songList=[{id:'demo',title:'Demo Song',artist:'System',charter:'AI',tags:['Demo'],cover:'',charts:{normal:null},audio:null}]; }
         _initBar();
+        _initStarBar();
         _filter('ALL');
         document.querySelectorAll('.diff-btn').forEach(btn=>{
             btn.onclick=()=>{ if(btn.classList.contains('disabled'))return; _diff=btn.dataset.diff; _updDiff(); Records.updateDisplay(_cur,_diff); };
@@ -2879,21 +3550,72 @@ const SongSelect = (() => {
             bar.appendChild(btn);
         });
     }
-    function _filter(tag){ filteredList=tag==='ALL'?songList:songList.filter(s=>(s.tags||[]).includes(tag)); _renderList(); }
-    function _renderList(){
-        const c=document.getElementById('song-list-container'); c.innerHTML='';
-        if(!filteredList.length){c.innerHTML='<div style="padding:20px;color:#666">No songs</div>';return;}
-        filteredList.forEach((s,i)=>{
-            const d=document.createElement('div'); d.className='song-item';
-            d.innerHTML=`<div style="font-weight:bold;">${s.title}</div><div style="font-size:12px;color:#aaa;">${s.artist}</div>`;
-            d.onclick=()=>selectSong(i); c.appendChild(d);
+
+    // 难度筛选
+    function _initStarBar() {
+        const bar = document.getElementById('difficulty-filter-bar');
+        if (!bar) return;
+        bar.innerHTML = '<span class="star-filter-label">STAR FILTER</span>';
+        ['ALL', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach(star => {
+            const btn = document.createElement('button');
+            btn.className = 'star-filter-btn' + (star === 'ALL' ? ' active' : '');
+            btn.dataset.star = String(star);
+            btn.innerText = star === 'ALL' ? 'ALL' : `${star}★`;
+            btn.onclick = () => {
+                document.querySelectorAll('.star-filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                _starFilter = btn.dataset.star === 'ALL' ? 'ALL' : Number(btn.dataset.star);
+                _applyFilters();
+            };
+            bar.appendChild(btn);
         });
-        selectSong(0);
+    }
+
+    function _filter(tag) {
+        _activeTag = tag;
+        _applyFilters();
+    }
+    function _applyFilters() {
+        filteredList = songList.filter(s => {
+            const tagOk = _activeTag === 'ALL' || (s.tags || []).includes(_activeTag);
+            const starOk = _matchStar(s);
+            return tagOk && starOk;
+        });
+        _renderList();
+    }
+    function _renderList(){
+        const c = document.getElementById('song-list-container');
+        const keepId = _cur?.id;
+        c.innerHTML = '';
+        if(!filteredList.length){
+            c.innerHTML = '<div style="padding:20px;color:#666">No songs</div>';
+            return;
+        }
+        filteredList.forEach((s, i) => {
+            const d = document.createElement('div');
+            d.className = 'song-item';
+            d.dataset.songId = s.id;
+            d.innerHTML = `
+                <div style="font-weight:bold;">${s.title}</div>
+                <div style="font-size:12px;color:#aaa;">${s.artist}</div>
+                ${_levelBadges(s)}
+            `;
+            d.onclick = () => selectSong(i);
+            c.appendChild(d);
+        });
+        let nextIndex = filteredList.findIndex(s => String(s.id) === String(keepId));
+        if (nextIndex < 0) nextIndex = 0;
+        selectSong(nextIndex);
     }
     function selectSong(idx){
+        const prevSongId = _cur?.id;
         document.querySelectorAll('.song-item').forEach(e=>e.classList.remove('selected'));
-        const items=document.querySelectorAll('.song-item'); if(items[idx])items[idx].classList.add('selected');
-        _cur=filteredList[idx]; if(!_cur)return;
+        const items=document.querySelectorAll('.song-item'); 
+        if(items[idx])items[idx].classList.add('selected');
+        _cur=filteredList[idx]; 
+        if(!_cur)return;
+        const songChanged = String(prevSongId) !== String(_cur.id);
+        _diff = _chooseDiffForSong(_cur);
         document.getElementById('preview-cover').src=_cur.cover||'';
         document.getElementById('preview-title').innerText=_cur.title;
         document.getElementById('preview-artist').innerText=_cur.artist;
@@ -2918,9 +3640,12 @@ const SongSelect = (() => {
                 !(charts[diff] || (_cur.id==='demo' && diff==='normal'))
             );
         });
-        if(!charts[_diff]&&_cur.id!=='demo'){const av=Object.keys(charts).find(k=>charts[k]);if(av)_diff=av;}
+        _diff = _chooseDiffForSong(_cur);
         _updDiff(); Records.updateDisplay(_cur,_diff);
-        const id=AudioManager.newPreviewId(); AudioManager.playPreview(_cur,id);
+        if (songChanged) {
+            const id = AudioManager.newPreviewId();
+            AudioManager.playPreview(_cur, id);
+        }
         const tip = document.getElementById('master-keytip');
         if (tip) {
             tip.style.display = (_diff === 'master') ? 'block' : 'none';
@@ -2937,7 +3662,7 @@ const SongSelect = (() => {
         if(!lv||!max){el.style.display='none';return;}
         el.innerText=Array.from({length:10},(_,i)=>i<lv?'★':'☆').join(''); el.style.display='block';
     }
-    return { init, selectSong, currentSong, selectedDiff, refreshList: () => _renderList() };
+    return { init, selectSong, currentSong, selectedDiff, refreshList: () => _applyFilters() };
 })();
 
 /* ============================================================

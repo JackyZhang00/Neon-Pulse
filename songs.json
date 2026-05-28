@@ -454,5 +454,31 @@
       "hard": null,
       "expert": "assets/快乐的扑满（FULL）/expert.json"
     }
+  },
+  {
+    "id": "梦的光点（FULL）",
+    "title": "梦的光点（FULL）",
+    "subtitle":"动画片《神兵小将》主题曲",
+    "artist": "王心凌",
+    "charter": "Nana_Chan（SR Atelier）",
+    "lyricist":"陈天佑",
+    "composer":"林俊杰",
+    "arranger":"洪信杰",
+    "tags": ["华语", "Official"],
+    "cover": "assets/梦的光点（FULL）/cover.png",
+    "audio": "assets/梦的光点（FULL）/song.mp3",
+    "preview_start": 69,
+    "levels": {
+      "easy": 3,
+      "normal": 6,
+      "hard": 8,
+      "expert": 6
+    },
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert": "assets/梦的光点（FULL）/expert.json"
+    }
   }
 ]

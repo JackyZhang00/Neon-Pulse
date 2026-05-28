@@ -130,6 +130,13 @@
       "src": "nana/5.png"
     },
     {
+      "id": "g002",
+      "type": "gallery",
+      "title": "数据风暴中的节奏引导者",
+      "cost": 220,
+      "src": "gallery/1.png"
+    },
+    {
       "id":"g007",
       "type": "gallery",
       "title": "烟花与完美约定",
@@ -140,15 +147,19 @@
       "id":"g008",
       "type": "gallery",
       "title": "除夕的团圆饭",
-      "cost": 0,
+      "cost": 600,
       "src": "gallery/3.png"
     },
     {
-      "id": "g002",
+      "id":"g009",
       "type": "gallery",
-      "title": "数据风暴中的节奏引导者",
-      "cost": 220,
-      "src": "gallery/1.png"
+      "title": "幻想夜游乐园的欢乐时光",
+      "cost": 600,
+      "freeFrom":"2026-06-01",
+      "freeUntil":"2026-06-14",
+      "visibleFrom":"2026-06-01",
+      "src": "gallery/幻想夜游乐园的欢乐时光.png"
     }
+    
   ]
 }
