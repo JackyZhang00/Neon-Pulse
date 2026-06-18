@@ -159,6 +159,16 @@
       "freeUntil":"2026-06-14",
       "visibleFrom":"2026-06-01",
       "src": "gallery/幻想夜游乐园的欢乐时光.png"
+    },
+    {
+      "id":"g010",
+      "type": "gallery",
+      "title": "数据缝隙里的端午厨房",
+      "cost": 600,
+      "freeFrom":"2026-06-19",
+      "freeUntil":"2026-06-21",
+      "visibleFrom":"2026-06-19",
+      "src": "gallery/数据缝隙里的端午厨房.png"
     }
     
   ]
