@@ -463,6 +463,96 @@ canvas { display: block; position: relative; z-index: 1; }
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
+/* 封面选择 */
+.cover-select-row {
+    display: none;
+    gap: 8px;
+    margin: 12px 0 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 360px;
+}
+.cover-option {
+    width: 58px;
+    height: 58px;
+    padding: 0;
+    border: 2px solid #444;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #111;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+}
+.cover-option img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0.75;
+}
+.cover-option span {
+    position: absolute;
+    right: 3px;
+    bottom: 2px;
+    font-size: 10px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 4px #000;
+}
+.cover-option:hover {
+    border-color: #0ff;
+    box-shadow: 0 0 10px rgba(0,255,255,0.4);
+    transform: translateY(-2px);
+}
+.cover-option.active {
+    border-color: #0ff;
+    box-shadow: 0 0 14px rgba(0,255,255,0.7);
+}
+.cover-option.active img { opacity: 1; }
+
+/* 歌曲版本选择 */
+.version-select-row {
+    display: none;
+    gap: 8px;
+    margin: 10px 0 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 420px;
+}
+.version-label {
+    color: #666;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    align-self: center;
+    margin-right: 2px;
+}
+.version-btn {
+    padding: 5px 14px;
+    border-radius: 999px;
+    border: 1px solid #555;
+    background: rgba(255,255,255,0.04);
+    color: #aaa;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+}
+.version-btn:hover {
+    border-color: #0ff;
+    color: #0ff;
+    background: rgba(0,255,255,0.08);
+    box-shadow: 0 0 10px rgba(0,255,255,0.35);
+}
+.version-btn.active {
+    background: #0ff;
+    color: #000;
+    border-color: #0ff;
+    box-shadow: 0 0 14px rgba(0,255,255,0.65);
+}
+
 /* 难度选择 */
 .diff-selector { display: flex; gap: 10px; margin: 20px 0; }
 .diff-btn {
@@ -1165,7 +1255,10 @@ Logo 开场页（最先显示）
      暂停菜单
      ============================================================ -->
 <div id="pause-menu" class="overlay" style="display:none;">
-    <h1 style="color:#fff;">PAUSED</h1>
+    <h1 id="pause-title" style="color:#fff;">PAUSED</h1>
+    <div id="pause-reason"
+         style="color:#ffcc00;font-weight:bold;margin-bottom:15px;text-align:center;display:none;">
+    </div>
     <button class="main-btn" onclick="Game.resumeWithCountdown()">RESUME</button>
     <button class="main-btn" onclick="Game.retry()"      style="margin-top:20px;background:#00ccff;color:black;">RETRY</button>
     <button class="main-btn" onclick="Game.backToMenu()" style="margin-top:20px;background:#f05;color:white;">EXIT</button>
@@ -1198,9 +1291,11 @@ Logo 开场页（最先显示）
         <div class="song-list-panel" id="song-list-container"></div>
         <div class="song-info-panel">
             <img id="preview-cover" class="cover-art" src="" alt="Cover">
+            <div id="cover-select-row" class="cover-select-row"></div>
             <h1 id="preview-title" style="margin:5px;">-</h1>
             <div id="preview-subtitle"></div>
             <p id="preview-artist"  style="color:#0ff;margin:0;">-</p>
+            <div id="version-select-row" class="version-select-row"></div>
             <p id="preview-charter" style="color:#666;font-size:12px;margin-top:5px;">-</p>
             <button onclick="window.location.href='tutorial.html'"
                 style="margin:10px 0 6px 0;background:transparent;border:1px solid #0ff;color:#0ff;
@@ -1343,6 +1438,20 @@ Logo 开场页（最先显示）
             <div class="setting-row">
                 <span>Auto Play (演示模式)</span>
                 <input type="checkbox" id="auto-mode-check">
+            </div>
+            <div class="setting-row">
+                <span>
+                    自动暂停
+                    <div style="font-size:11px;color:#666;margin-top:3px;font-weight:normal;">
+                        当挑战目标已无法达成时自动暂停
+                    </div>
+                </span>
+                <select id="auto-pause-select">
+                    <option value="off">OFF / 关闭</option>
+                    <option value="fc">FULL COMBO / 无 BAD、MISS</option>
+                    <option value="ap">ALL PERFECT / 无 GOOD、BAD、MISS</option>
+                    <option value="ac">ALL CRITICAL / 全 CRITICAL</option>
+                </select>
             </div>
             <div class="setting-row">
                 <span>
@@ -1498,19 +1607,15 @@ Logo 开场页（最先显示）
      ============================================================ -->
 <div id="update-modal" class="overlay" style="display:none;z-index:100;">
     <div id="update-box">
-        <div class="update-header">System Update // V1.7.0_alpha</div>
+        <div class="update-header">System Update // V1.8.0_alpha</div>
         <div class="update-content">
             <div class="update-list-item">
-                <span class="update-tag">NEW</span><strong>星级筛选系统</strong><br>
-                <span style="color:#aaa;">可以选择特定难度的曲目游玩</span>
+                <span class="update-tag">NEW</span><strong>自动暂停</strong><br>
+                <span style="color:#aaa;">可以选择当无法达成FC或AP时自动暂停</span>
             </div>
             <div class="update-list-item">
-                <span class="update-tag">NEW</span><strong>读谱提示条</strong><br>
-                <span style="color:#aaa;">对于过难曲目，可以在设置中开启“读谱提示条”方便读谱</span>
-            </div>
-            <div class="update-list-item">
-                <span class="update-tag">NEW</span><strong>流速模式设置</strong><br>
-                <span style="color:#aaa;">可以选择恒定流速谱面或变速谱面游玩</span>
+                <span class="update-tag">NEW</span><strong>歌曲版本切换</strong><br>
+                <span style="color:#aaa;">一些歌曲新增了多个封面与版本，可以选择喜欢的版本进行游戏</span>
             </div>
         </div>
         <div style="text-align:center;">
@@ -1636,7 +1741,7 @@ const INPUT_STRIP_ROW_H = 22;       // 每一行高度
 
 const CLEAR_TYPE       = { NONE:0, FAILED:1, CLEAR:2, FC:3, AP:4, AC:5 };
 
-const CURRENT_VERSION_KEY = 'V1.7.0_alpha';
+const CURRENT_VERSION_KEY = 'V1.8.0_alpha';
 
 /* ============================================================
    DataManager 模块（新功能2）—— 导入 / 导出 / 重置
@@ -1647,6 +1752,8 @@ const CURRENT_VERSION_KEY = 'V1.7.0_alpha';
         'neon_pulse_records_v1',
         'neon_collection_v1',
         'neon_read_mails',
+        'neon_cover_choice_v1',
+        'neon_song_version_choice_v1',
     ];
 
     // ── 加密参数 ──────────────────────────────────────────
@@ -1803,6 +1910,211 @@ const CURRENT_VERSION_KEY = 'V1.7.0_alpha';
     return { exportData, triggerImport, importData, resetData };
 })();
 
+
+/* ============================================================
+   VersionManager 模块 —— 歌曲版本选择
+   ------------------------------------------------------------
+   song_versions.json 示例：
+   {
+     "song_id": [
+       {
+         "id": "ver2",
+         "name": "Another Ver.",
+         "audio": "songs/song_id/audio-2.mp3",
+         "cover": "songs/song_id/cover_ver2.png",
+         "artist": "歌手B",
+         "vocal": "歌手B",
+         "lyricist": "作词B",
+         "composer": "作曲B",
+         "arranger": "编曲B",
+         "charter": "谱师B",
+         "preview_start": 15
+       }
+     ]
+   }
+   注意：谱面 charts、星级 levels、成绩 id 始终继承 songs.json 原歌曲。
+   ============================================================ */
+const VersionManager = (() => {
+    const DATA_URL = 'song_versions.json';
+    const STORAGE_KEY = 'neon_song_version_choice_v1';
+    let versionData = {};
+
+    async function init() {
+        try {
+            const r = await fetch(DATA_URL + '?v=' + Date.now());
+            versionData = r.ok ? await r.json() : {};
+        } catch(e) {
+            versionData = {};
+        }
+    }
+
+    function _songKey(song) {
+        return String(song?.id || song?.title || 'unknown');
+    }
+
+    function _loadChoices() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+        catch(e) { return {}; }
+    }
+
+    function _saveChoices(data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function _baseVersion(song) {
+        return {
+            id: 'default',
+            name: '默认版本',
+            audio: song?.audio,
+            cover: song?.cover,
+            artist: song?.artist,
+            vocal: song?.vocal,
+            lyricist: song?.lyricist,
+            composer: song?.composer,
+            arranger: song?.arranger,
+            charter: song?.charter,
+            subtitle: song?.subtitle,
+            preview_start: song?.preview_start
+        };
+    }
+
+    function versions(song) {
+        if (!song) return [];
+        const key = _songKey(song);
+        const extra = Array.isArray(versionData[key]) ? versionData[key] : [];
+        return [_baseVersion(song), ...extra].map((v, i) => ({
+            ...v,
+            id: v.id || `ver_${i}`,
+            name: v.name || (i === 0 ? '默认版本' : `版本 ${i + 1}`)
+        }));
+    }
+
+    function selectedId(song) {
+        const list = versions(song);
+        if (!list.length) return 'default';
+        const choices = _loadChoices();
+        const saved = choices[_songKey(song)];
+        return list.some(v => v.id === saved) ? saved : list[0].id;
+    }
+
+    function selectedVersion(song) {
+        const list = versions(song);
+        const id = selectedId(song);
+        return list.find(v => v.id === id) || list[0] || null;
+    }
+
+    function setSelected(song, versionId) {
+        const list = versions(song);
+        if (!list.some(v => v.id === versionId)) return;
+        const choices = _loadChoices();
+        choices[_songKey(song)] = versionId;
+        _saveChoices(choices);
+    }
+
+    function _compact(obj) {
+        const out = {};
+        Object.entries(obj || {}).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && v !== '') out[k] = v;
+        });
+        return out;
+    }
+
+    function resolve(song) {
+        if (!song) return null;
+        const v = selectedVersion(song) || _baseVersion(song);
+        const effective = { ...song, ..._compact(v) };
+
+        // 关键：版本只覆盖音源与显示信息；谱面、星级、成绩身份仍然属于原歌曲。
+        effective.id = song.id;
+        effective.charts = song.charts;
+        effective.levels = song.levels;
+        effective.tags = song.tags;
+
+        effective.versionId = v.id || 'default';
+        effective.versionName = v.name || '默认版本';
+        return effective;
+    }
+
+    return { init, versions, selectedId, selectedVersion, setSelected, resolve };
+})();
+
+/* ============================================================
+   CoverManager 模块 —— 保留原封面切换逻辑，并按版本分别记忆
+   ------------------------------------------------------------
+   若基础封面为 cover.png，则自动尝试 cover-2.png、cover-3.png……
+   若版本基础封面为 cover_v2.png，则自动尝试 cover_v2-2.png……
+   ============================================================ */
+const CoverManager = (() => {
+    const STORAGE_KEY = 'neon_cover_choice_v1';
+    const MAX_VARIANTS = 9;
+    const cache = new Map();
+
+    function _choiceKey(song) {
+        const songId = String(song?.id || song?.title || song?.cover || 'unknown');
+        const versionId = String(song?.versionId || 'default');
+        return `${songId}__${versionId}`;
+    }
+
+    function _loadChoices() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+        catch(e) { return {}; }
+    }
+
+    function _saveChoices(data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function withSuffix(path, index) {
+        if (!path || index === 1) return path || '';
+        const qIndex = path.indexOf('?');
+        const main = qIndex >= 0 ? path.slice(0, qIndex) : path;
+        const query = qIndex >= 0 ? path.slice(qIndex) : '';
+        const dot = main.lastIndexOf('.');
+        if (dot < 0) return `${main}-${index}${query}`;
+        return `${main.slice(0, dot)}-${index}${main.slice(dot)}${query}`;
+    }
+
+    function imageExists(src) {
+        return new Promise(resolve => {
+            if (!src) { resolve(false); return; }
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = src;
+        });
+    }
+
+    async function variants(song) {
+        const base = song?.cover || '';
+        if (!base) return [];
+        const key = `${_choiceKey(song)}::${base}`;
+        if (cache.has(key)) return cache.get(key);
+
+        const list = [base];
+        for (let i = 2; i <= MAX_VARIANTS; i++) {
+            const candidate = withSuffix(base, i);
+            const ok = await imageExists(candidate);
+            if (!ok) break;
+            list.push(candidate);
+        }
+        cache.set(key, list);
+        return list;
+    }
+
+    function selected(song) {
+        const choices = _loadChoices();
+        return choices[_choiceKey(song)] || song?.cover || '';
+    }
+
+    function setSelected(song, coverPath) {
+        const choices = _loadChoices();
+        choices[_choiceKey(song)] = coverPath;
+        _saveChoices(choices);
+    }
+
+    return { variants, selected, setSelected, withSuffix };
+})();
+
 /* ============================================================
    SongInfoCard 模块（新功能1）—— 游戏前歌曲信息展示
    ============================================================ */
@@ -1845,14 +2157,18 @@ const SongInfoCard = (() => {
 
     /** 填充卡片内容 */
     function _populate(song, diff) {
-        // 背景 & 封面
-        document.getElementById('card-bg-img').style.backgroundImage = `url('${song.cover || ''}')`;
-        document.getElementById('card-cover-img').src = song.cover || '';
+        // 背景 & 封面：最终封面仍然由 CoverManager 决定
+        const cover = CoverManager.selected(song);
+        document.getElementById('card-bg-img').style.backgroundImage = cover ? `url('${cover}')` : '';
+        document.getElementById('card-cover-img').src = cover || '';
 
         // 文字
-        document.getElementById('card-title').innerText    = song.title    || '—';
-        document.getElementById('card-subtitle').innerText = song.subtitle || '';
-        document.getElementById('card-subtitle').style.display = song.subtitle ? 'block' : 'none';
+        document.getElementById('card-title').innerText = song.title || '—';
+        const cardSubParts = [];
+        if (song.subtitle?.trim()) cardSubParts.push(song.subtitle.trim());
+        if (song.versionName && song.versionName !== '默认版本') cardSubParts.push(song.versionName);
+        document.getElementById('card-subtitle').innerText = cardSubParts.join(' // ');
+        document.getElementById('card-subtitle').style.display = cardSubParts.length ? 'block' : 'none';
 
         // 歌曲详情字段
         document.getElementById('card-vocal').innerText   = song.vocal    || song.artist || '—';
@@ -1911,6 +2227,9 @@ const Settings = (() => {
         devMode: false, autoMode: false,
         hitSound: true, hitSoundPack: 'mp3',
         scrollMode: 'constant',
+
+        // 新增：挑战目标失败时自动暂停
+        autoPauseGoal: 'off',
 
         // 新增：下方读谱提示条总开关
         inputStripEnabled: true,
@@ -1978,6 +2297,7 @@ const Settings = (() => {
         bindRange('bgm-vol-input', 'bgmVolume', 'bgm-vol-val',  2);
         bindRange('sfx-vol-input', 'sfxVolume', 'sfx-vol-val',  2);
         bindCheck('auto-mode-check', 'autoMode');
+        bindSelect('auto-pause-select', 'autoPauseGoal');
         bindCheck('input-strip-check', 'inputStripEnabled');
         _updateInputStripHint();
         bindCheck('hitsound-check',  'hitSound');
@@ -2674,6 +2994,7 @@ const Game = (() => {
     let beatTimes = [];
 
     let animFrameId=null, isPlaying=false, isPaused=false, isCountingDown=false;
+    let autoPauseTriggered = false;
     let shakeIntensity=0, bgFlash=0;
     let stats={}, totalScoreUnit=0;
     let fireworkTimer=null;
@@ -3209,6 +3530,52 @@ const Game = (() => {
         else{const a=LANE_ANGLES[lane];CTX.beginPath();CTX.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r,15,0,6.28);CTX.fillStyle=LANE_COLORS[lane];CTX.fill();}
     }
 
+    function _getAutoPauseReason() {
+        const s = Settings.get();
+        const goal = s.autoPauseGoal || 'off';
+
+        if (goal === 'off') return '';
+
+        // 建议：自动播放、开发模式、辅助键开启时不触发挑战暂停
+        // 如果你希望练习时也触发，可以删掉这一段
+        if (s.autoMode || s.devMode || Settings.isAssistActive()) return '';
+
+        if (goal === 'fc') {
+            if (stats.bad > 0 || stats.miss > 0) {
+                return 'FULL COMBO 挑战失败';
+            }
+        }
+
+        if (goal === 'ap') {
+            if (stats.good > 0 || stats.bad > 0 || stats.miss > 0) {
+                return 'ALL PERFECT 挑战失败';
+            }
+        }
+
+        if (goal === 'ac') {
+            if (stats.perfect > 0 || stats.good > 0 || stats.bad > 0 || stats.miss > 0) {
+                return 'ALL CRITICAL 挑战失败';
+            }
+        }
+
+        return '';
+    }
+
+    function _checkAutoPauseAfterHit() {
+        if (autoPauseTriggered) return;
+
+        const reason = _getAutoPauseReason();
+        if (!reason) return;
+
+        autoPauseTriggered = true;
+
+        // 延后一帧暂停，让判定文字和粒子先生成出来
+        setTimeout(() => {
+            if (isPlaying && !isPaused && !isCountingDown) {
+                pause(reason);
+            }
+        }, 0);
+    }
     function _hit(type,lane){
         if(type!=='miss') AudioManager.playHitSound(lane);
         let text='',color='#fff',rainbow=false;
@@ -3232,6 +3599,8 @@ const Game = (() => {
             if(type!=='miss')Particles.addExplosion(lane);
             Particles.addText(p.x,p.y,text,color,rainbow);
         }
+
+        _checkAutoPauseAfterHit();
     }
 
     function handleKeyDown(e){
@@ -3268,12 +3637,33 @@ const Game = (() => {
         _hit(diff<JUDGE.CRITICAL?'critical':diff<JUDGE.PERFECT?'perfect':diff<JUDGE.GOOD?'good':diff<JUDGE.BAD?'bad':'miss',lane);
     }
 
-    function pause(){
-        if(isCountingDown)return;
-        isPaused=true; AudioManager.ctx.suspend();
-        document.getElementById('pause-menu').style.display='flex';
+    function pause(reason = ''){
+        if(isCountingDown || !isPlaying || isPaused) return;
+
+        isPaused = true;
+        if (AudioManager.ctx) AudioManager.ctx.suspend();
+
+        const titleEl = document.getElementById('pause-title');
+        const reasonEl = document.getElementById('pause-reason');
+
+        if (titleEl) titleEl.innerText = reason ? 'FAILED' : 'PAUSED';
+
+        if (reasonEl) {
+            reasonEl.innerText = reason || '';
+            reasonEl.style.display = reason ? 'block' : 'none';
+        }
+
+        document.getElementById('pause-menu').style.display = 'flex';
     }
     function resumeWithCountdown(){
+        const titleEl = document.getElementById('pause-title');
+        const reasonEl = document.getElementById('pause-reason');
+        if (titleEl) titleEl.innerText = 'PAUSED';
+        if (reasonEl) {
+            reasonEl.innerText = '';
+            reasonEl.style.display = 'none';
+        }
+        
         document.getElementById('pause-menu').style.display='none'; isCountingDown=true;
         const el=document.getElementById('countdown-overlay'); el.style.display='flex';
         let c=5; el.innerText=c;
@@ -3345,14 +3735,17 @@ const Game = (() => {
         events.forEach(e=>e.triggered=false);
         let maxJ=0; notes.forEach(n=>maxJ+=(n.duration>0?2:1));
         totalScoreUnit=1000000/(maxJ||1);
-        _resetStats(); Particles.clear(); shakeIntensity=0; bgFlash=0;inputStripAlpha = 0;
+        _resetStats(); autoPauseTriggered = false; Particles.clear(); shakeIntensity=0; bgFlash=0;inputStripAlpha = 0;
 
         document.getElementById('hud').style.display='block';
         document.getElementById('hud-title').innerText=song.title;
-        document.getElementById('hud-detail').innerText=`${song.artist} - ${diff.toUpperCase()}`;
+        document.getElementById('hud-detail').innerText =
+            `${song.artist || song.vocal || '—'}${song.versionName && song.versionName !== '默认版本' ? ' / ' + song.versionName : ''} - ${diff.toUpperCase()}`;
         document.getElementById('score-display').innerText='0000000';
         document.getElementById('combo-display').style.opacity=0;
         document.getElementById('auto-indicator').style.display=Settings.get().autoMode?'block':'none';
+        const gameCover = CoverManager.selected(song);
+        document.getElementById('bg-layer').style.backgroundImage = gameCover ? `url('${gameCover}')` : '';
         document.getElementById('bg-layer').style.opacity='0.5';
 
         const clearScore=CLEAR_THRESHOLDS[diff]||600000;
@@ -3483,17 +3876,21 @@ const Game = (() => {
 /* ============================================================
    SongSelect 模块
    ============================================================ */
-   const SongSelect = (() => {
+const SongSelect = (() => {
     let songList=[], filteredList=[], _cur=null, _diff='normal';
     let _activeTag = 'ALL';
     let _starFilter = 'ALL';
+    let _coverScanToken = 0;
 
     const _DIFF_ORDER = ['easy', 'normal', 'hard', 'expert', 'master'];
-    function currentSong()  { return _cur; }
+
+    // 对外暴露当前歌曲时，返回“版本解析后”的歌曲对象；谱面和成绩 id 仍保留原歌曲。
+    function currentSong()  { return VersionManager.resolve(_cur); }
     function selectedDiff() { return _diff; }
+
     // 难度筛选
     function _hasChart(song, diff) {
-    return !!(song?.charts?.[diff]) || (song?.id === 'demo' && diff === 'normal');
+        return !!(song?.charts?.[diff]) || (song?.id === 'demo' && diff === 'normal');
     }
     function _isDiffVisible(diff) {
         return diff !== 'master' || Settings.get().masterUnlocked;
@@ -3531,11 +3928,14 @@ const Game = (() => {
     async function init(){
         try{ const r=await fetch('songs.json'); songList=await r.json(); }
         catch(e){ songList=[{id:'demo',title:'Demo Song',artist:'System',charter:'AI',tags:['Demo'],cover:'',charts:{normal:null},audio:null}]; }
+
+        await VersionManager.init();
+
         _initBar();
         _initStarBar();
         _filter('ALL');
         document.querySelectorAll('.diff-btn').forEach(btn=>{
-            btn.onclick=()=>{ if(btn.classList.contains('disabled'))return; _diff=btn.dataset.diff; _updDiff(); Records.updateDisplay(_cur,_diff); };
+            btn.onclick=()=>{ if(btn.classList.contains('disabled'))return; _diff=btn.dataset.diff; _updDiff(); Records.updateDisplay(currentSong(),_diff); };
         });
         document.getElementById('btn-start').onclick=()=>Game.start();
     }
@@ -3595,8 +3995,10 @@ const Game = (() => {
             const d = document.createElement('div');
             d.className = 'song-item';
             d.dataset.songId = s.id;
+            const versionCount = VersionManager.versions(s).length;
+            const versionHint = versionCount > 1 ? `<span style="font-size:10px;color:#0ff;margin-left:6px;">×${versionCount} VER</span>` : '';
             d.innerHTML = `
-                <div style="font-weight:bold;">${s.title}</div>
+                <div style="font-weight:bold;">${s.title}${versionHint}</div>
                 <div style="font-size:12px;color:#aaa;">${s.artist}</div>
                 ${_levelBadges(s)}
             `;
@@ -3607,22 +4009,145 @@ const Game = (() => {
         if (nextIndex < 0) nextIndex = 0;
         selectSong(nextIndex);
     }
+
+    function _applyCoverChoice(song, coverPath) {
+        CoverManager.setSelected(song, coverPath);
+        const activeSong = currentSong();
+        if (!activeSong || song.id !== activeSong.id || song.versionId !== activeSong.versionId) return;
+        document.getElementById('preview-cover').src = coverPath || '';
+        document.getElementById('bg-layer').style.backgroundImage = coverPath ? `url('${coverPath}')` : '';
+    }
+
+    async function _renderCoverSelector(song) {
+        const row = document.getElementById('cover-select-row');
+        if (!row) return;
+        row.innerHTML = '';
+        row.style.display = 'none';
+        if (!song?.cover) return;
+
+        const token = ++_coverScanToken;
+        const covers = await CoverManager.variants(song);
+        const activeSong = currentSong();
+        if (token !== _coverScanToken || !activeSong || song.id !== activeSong.id || song.versionId !== activeSong.versionId) return;
+
+        const selectedCover = CoverManager.selected(song);
+        if (!covers.includes(selectedCover)) {
+            CoverManager.setSelected(song, covers[0] || song.cover || '');
+            if (covers[0]) {
+                document.getElementById('preview-cover').src = covers[0];
+                document.getElementById('bg-layer').style.backgroundImage = `url('${covers[0]}')`;
+            }
+        }
+
+        if (covers.length <= 1) {
+            row.style.display = 'none';
+            return;
+        }
+
+        row.style.display = 'flex';
+        const finalSelected = CoverManager.selected(song);
+        covers.forEach((coverPath, index) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'cover-option' + (coverPath === finalSelected ? ' active' : '');
+            btn.title = index === 0 ? '默认封面' : `封面 ${index + 1}`;
+
+            const img = document.createElement('img');
+            img.src = coverPath;
+            img.alt = `Cover ${index + 1}`;
+
+            const label = document.createElement('span');
+            label.innerText = String(index + 1);
+
+            btn.appendChild(img);
+            btn.appendChild(label);
+            btn.onclick = () => {
+                _applyCoverChoice(song, coverPath);
+                row.querySelectorAll('.cover-option').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            };
+            row.appendChild(btn);
+        });
+    }
+
+    function _renderVersionSelector() {
+        const row = document.getElementById('version-select-row');
+        if (!row || !_cur) return;
+
+        const list = VersionManager.versions(_cur);
+        row.innerHTML = '';
+        if (list.length <= 1) {
+            row.style.display = 'none';
+            return;
+        }
+
+        row.style.display = 'flex';
+        const label = document.createElement('span');
+        label.className = 'version-label';
+        label.innerText = 'VERSION';
+        row.appendChild(label);
+
+        const selected = VersionManager.selectedId(_cur);
+        list.forEach(v => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'version-btn' + (v.id === selected ? ' active' : '');
+            btn.innerText = v.name || v.id;
+            btn.onclick = () => {
+                VersionManager.setSelected(_cur, v.id);
+                row.querySelectorAll('.version-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                _refreshSongPreview(true);
+            };
+            row.appendChild(btn);
+        });
+    }
+
+    function _refreshSongPreview(restartPreview = false) {
+        if (!_cur) return;
+        const song = currentSong();
+        if (!song) return;
+
+        const cover = CoverManager.selected(song);
+        document.getElementById('preview-cover').src = cover || '';
+        document.getElementById('bg-layer').style.backgroundImage = cover ? `url('${cover}')` : '';
+
+        document.getElementById('preview-title').innerText = song.title || '—';
+        document.getElementById('preview-artist').innerText = song.artist || song.vocal || '—';
+        document.getElementById('preview-charter').innerText = '谱师: ' + (song.charter || '?');
+
+        const sub = document.getElementById('preview-subtitle');
+        const subParts = [];
+        if (song.subtitle?.trim()) subParts.push(song.subtitle.trim());
+        if (song.versionName && song.versionName !== '默认版本') subParts.push(song.versionName);
+        if (subParts.length) {
+            sub.innerText = subParts.join(' // ');
+            sub.style.display = 'block';
+        } else {
+            sub.style.display = 'none';
+        }
+
+        _renderCoverSelector(song);
+
+        if (restartPreview) {
+            const id = AudioManager.newPreviewId();
+            AudioManager.playPreview(song, id);
+        }
+    }
+
     function selectSong(idx){
         const prevSongId = _cur?.id;
         document.querySelectorAll('.song-item').forEach(e=>e.classList.remove('selected'));
-        const items=document.querySelectorAll('.song-item'); 
+        const items=document.querySelectorAll('.song-item');
         if(items[idx])items[idx].classList.add('selected');
-        _cur=filteredList[idx]; 
+        _cur=filteredList[idx];
         if(!_cur)return;
         const songChanged = String(prevSongId) !== String(_cur.id);
         _diff = _chooseDiffForSong(_cur);
-        document.getElementById('preview-cover').src=_cur.cover||'';
-        document.getElementById('preview-title').innerText=_cur.title;
-        document.getElementById('preview-artist').innerText=_cur.artist;
-        document.getElementById('preview-charter').innerText='Charter: '+(_cur.charter||'?');
-        document.getElementById('bg-layer').style.backgroundImage=`url('${_cur.cover}')`;
-        const sub=document.getElementById('preview-subtitle');
-        if(_cur.subtitle?.trim()){sub.innerText=_cur.subtitle;sub.style.display='block';}else sub.style.display='none';
+
+        _renderVersionSelector();
+        _refreshSongPreview(songChanged);
+
         const charts=_cur.charts||{};
         document.querySelectorAll('.diff-btn').forEach(btn=>{
             const diff = btn.dataset.diff;
@@ -3641,11 +4166,7 @@ const Game = (() => {
             );
         });
         _diff = _chooseDiffForSong(_cur);
-        _updDiff(); Records.updateDisplay(_cur,_diff);
-        if (songChanged) {
-            const id = AudioManager.newPreviewId();
-            AudioManager.playPreview(_cur, id);
-        }
+        _updDiff(); Records.updateDisplay(currentSong(),_diff);
         const tip = document.getElementById('master-keytip');
         if (tip) {
             tip.style.display = (_diff === 'master') ? 'block' : 'none';

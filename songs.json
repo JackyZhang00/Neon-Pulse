@@ -480,5 +480,56 @@
       "hard": null,
       "expert": "assets/梦的光点（FULL）/expert.json"
     }
+  },
+  {
+    "id": "アイドル",
+    "title": "アイドル",
+    "subtitle":"翻自动漫《我推的孩子》主题曲",
+    "artist": "Pastel＊Palettes",
+    "charter": "Nana_Chan（SR Atelier）",
+    "lyricist":"Ayase",
+    "composer":"Ayase",
+    "arranger":"岩橋星実（Elements Garden）",
+    "tags": ["BanG Dream!", "Official", "Animate"],
+    "cover": "assets/アイドル/cover.png",
+    "audio": "assets/アイドル/song.mp3",
+    "preview_start": 57,
+    "levels": {
+      "easy": 3,
+      "normal": 6,
+      "hard": 6,
+      "expert": 7
+    },
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": "assets/アイドル/hard.json",
+      "expert": "assets/アイドル/expert.json"
+    }
+  },
+  {
+    "id": "Blessing Chord",
+    "title": "Blessing Chord",
+    "artist": "Roselia",
+    "charter": "Nana_Chan（SR Atelier）",
+    "lyricist":"織田あすか（Elements Garden）",
+    "composer":"竹田祐介（Elements Garden）",
+    "arranger":"竹田祐介（Elements Garden）",
+    "tags": ["BanG Dream!", "Official"],
+    "cover": "assets/Blessing Chord/cover.png",
+    "audio": "assets/Blessing Chord/song.mp3",
+    "preview_start": 85,
+    "levels": {
+      "easy": 3,
+      "normal": 6,
+      "hard": 6,
+      "expert": 8
+    },
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert": "assets/Blessing Chord/expert.json"
+    }
   }
 ]
