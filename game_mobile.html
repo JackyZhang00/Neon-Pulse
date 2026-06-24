@@ -1440,6 +1440,226 @@ canvas {
     }
 }
 
+
+/* ============================================================
+   17. 手机端二次优化：选歌顶部不交叠 + 大面积触控热区
+   ============================================================ */
+@media (pointer: coarse), (max-width: 900px) {
+    /* 选歌页：把“资源显示 / 档案室 / 邮件 / 设置 / 分类条”改成正常文档流，避免绝对定位互相压住 */
+    #song-select-screen {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 8px;
+        padding: calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom));
+        overflow: hidden;
+    }
+    #main-fragment-display,
+    #collection-btn,
+    #mailbox-btn,
+    #settings-btn {
+        position: static !important;
+        top: auto !important;
+        right: auto !important;
+        left: auto !important;
+        transform: none !important;
+        box-sizing: border-box;
+        margin: 0;
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+    }
+    #main-fragment-display {
+        order: 0;
+        flex: 0 0 100%;
+        height: 34px;
+        font-size: 13px;
+        background: rgba(0,0,0,0.36);
+    }
+    #collection-btn,
+    #mailbox-btn,
+    #settings-btn {
+        order: 1;
+        flex: 1 1 calc(33.333% - 6px);
+        padding: 8px 6px;
+        font-size: clamp(11px, 3.3vw, 13px);
+        border-radius: 999px;
+        background: rgba(0,0,0,0.32);
+        min-width: 0;
+    }
+    #collection-btn span,
+    #mailbox-btn span,
+    #settings-btn span {
+        font-size: 17px !important;
+    }
+    #category-bar {
+        order: 2;
+        flex: 0 0 100%;
+        height: auto;
+        min-height: 42px;
+        margin: 2px 0 0;
+        padding: 0 0 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.16);
+    }
+    #difficulty-filter-bar {
+        order: 3;
+        flex: 0 0 100%;
+        height: auto;
+        min-height: 38px;
+        margin: 0;
+        padding: 0 0 8px;
+    }
+    #category-bar,
+    #difficulty-filter-bar {
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+    .content-wrapper {
+        order: 4;
+        flex: 1 1 100%;
+        min-height: 0;
+        max-height: none;
+    }
+
+    /* 游戏内 HUD 层放到触控层之上，只让暂停按钮接收点击；文字仍不会阻挡大面积触控 */
+    #hud {
+        z-index: 20;
+    }
+    #pause-touch-btn {
+        z-index: 30;
+        min-height: 42px;
+        min-width: 92px;
+    }
+
+    /* 大面积触控：实际命中由 JS 按屏幕象限判断；这些区域只作为低透明视觉提示 */
+    #mobile-touch-controls {
+        z-index: 6;
+        pointer-events: none;
+        --mobile-center-hot-radius: clamp(54px, 14vw, 86px);
+        --mobile-center-visual-size: clamp(74px, 20vw, 118px);
+        --mobile-sector-gap: clamp(46px, 13vw, 82px);
+    }
+    #mobile-touch-controls.visible {
+        pointer-events: auto;
+    }
+    .mobile-touch-zone {
+        pointer-events: none;
+        width: auto;
+        height: auto;
+        border-radius: 0;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.035);
+        box-shadow: inset 0 0 28px rgba(255,255,255,0.035);
+        backdrop-filter: none;
+        opacity: 0.48;
+        font-size: clamp(28px, 8vw, 44px);
+        text-shadow: 0 0 14px currentColor, 0 2px 8px #000;
+    }
+    .mobile-touch-zone::after {
+        bottom: auto;
+        top: calc(50% + 24px);
+        font-size: 9px;
+        opacity: 0.72;
+    }
+    .mobile-zone-up {
+        left: 0;
+        right: 0;
+        top: 0;
+        height: calc(50% - var(--mobile-sector-gap));
+        transform: none;
+        clip-path: polygon(0 0, 100% 0, 62% 100%, 38% 100%);
+        padding-bottom: 18px;
+    }
+    .mobile-zone-right {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: calc(50% + var(--mobile-sector-gap));
+        transform: none;
+        clip-path: polygon(0 38%, 100% 0, 100% 100%, 0 62%);
+        padding-left: 18px;
+    }
+    .mobile-zone-down {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: calc(50% + var(--mobile-sector-gap));
+        transform: none;
+        clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+        padding-top: 18px;
+    }
+    .mobile-zone-left {
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: calc(50% + var(--mobile-sector-gap));
+        transform: none;
+        clip-path: polygon(0 0, 100% 38%, 100% 62%, 0 100%);
+        padding-right: 18px;
+    }
+    .mobile-zone-center {
+        pointer-events: none;
+        width: var(--mobile-center-visual-size);
+        height: var(--mobile-center-visual-size);
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        border: 2px solid currentColor;
+        background: rgba(214,0,255,0.16);
+        box-shadow: 0 0 22px rgba(214,0,255,0.75), inset 0 0 22px rgba(214,0,255,0.22);
+        opacity: 0.92;
+        font-size: clamp(13px, 4vw, 19px);
+        letter-spacing: 1px;
+        clip-path: none;
+        padding: 0;
+    }
+    .mobile-zone-center::after {
+        top: calc(50% + 25px);
+    }
+    .mobile-touch-zone.pressed {
+        opacity: 0.92;
+        background: rgba(255,255,255,0.12);
+        box-shadow: inset 0 0 46px currentColor, 0 0 20px currentColor;
+    }
+    .mobile-zone-center.pressed {
+        background: rgba(214,0,255,0.32);
+        box-shadow: 0 0 34px rgba(214,0,255,1), inset 0 0 26px rgba(214,0,255,0.45);
+    }
+    .mobile-touch-hint {
+        bottom: calc(62px + env(safe-area-inset-bottom));
+        max-width: calc(100vw - 28px);
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+@media (pointer: coarse) and (max-width: 480px) {
+    #collection-btn,
+    #mailbox-btn,
+    #settings-btn {
+        font-size: 11px;
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+    #collection-btn span,
+    #mailbox-btn span,
+    #settings-btn span {
+        font-size: 15px !important;
+    }
+    .tag-btn,
+    .star-filter-btn {
+        padding-left: 11px;
+        padding-right: 11px;
+        min-height: 38px;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -4258,6 +4478,9 @@ const Game = (() => {
 
 /* ============================================================
    MobileControls 模块：手机端方向/中心圆触控输入
+   - 点击中心圆：空格
+   - 点击中心圆以外：按相对中心的方向自动归入 ↑ / → / ↓ / ←
+   - 因此轨道外侧几乎整块屏幕都可以作为方向按钮使用
    ============================================================ */
 const MobileControls = (() => {
     let root = null;
@@ -4275,17 +4498,63 @@ const MobileControls = (() => {
         const el = _zone(lane);
         if(el) el.classList.toggle('pressed', !!pressed);
     }
-    function _clearTouches(){
+    function _clearTouches(sendKeyUp = false){
+        if(sendKeyUp){
+            Array.from(lanePointers.keys()).forEach(lane => Game.handleLaneUp(lane));
+        }
         pointerToLane.clear();
         lanePointers.clear();
         root?.querySelectorAll('.mobile-touch-zone.pressed').forEach(el => el.classList.remove('pressed'));
+    }
+    function _cssPx(name, fallback){
+        const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        const val = parseFloat(raw);
+        return Number.isFinite(val) ? val : fallback;
+    }
+    function _laneFromPoint(clientX, clientY){
+        const rect = root.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = clientX - cx;
+        const dy = clientY - cy;
+        const dist = Math.hypot(dx, dy);
+        const centerFallback = Math.max(54, Math.min(86, Math.min(rect.width, rect.height) * 0.14));
+        const centerHotRadius = _cssPx('--mobile-center-hot-radius', centerFallback);
+
+        // 中心圆范围内等价于空格；中心圆以外的整块屏幕按象限/方向归入四个方向键。
+        if(dist <= centerHotRadius) return 4;
+        if(Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? 1 : 3;
+        return dy >= 0 ? 2 : 0;
+    }
+    function _pressLane(pointerId, lane){
+        pointerToLane.set(pointerId, lane);
+        const set = lanePointers.get(lane) || new Set();
+        const firstPress = set.size === 0;
+        set.add(pointerId);
+        lanePointers.set(lane, set);
+        _setPressed(lane, true);
+        if(firstPress) Game.handleLaneDown(lane);
+    }
+    function _releasePointer(pointerId){
+        const lane = pointerToLane.get(pointerId);
+        if(lane === undefined) return;
+        pointerToLane.delete(pointerId);
+        const set = lanePointers.get(lane);
+        if(set){
+            set.delete(pointerId);
+            if(set.size === 0){
+                lanePointers.delete(lane);
+                _setPressed(lane, false);
+                Game.handleLaneUp(lane);
+            }
+        }
     }
     function sync(){
         if(!root)return;
         const shouldShow = enabled && _isTouchPreferred();
         root.classList.toggle('visible', shouldShow);
         root.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
-        if(!shouldShow)_clearTouches();
+        if(!shouldShow)_clearTouches(true);
     }
     function show(){
         enabled = true;
@@ -4296,44 +4565,27 @@ const MobileControls = (() => {
         sync();
     }
     function _onDown(e){
-        if(!enabled)return;
-        const zone = e.currentTarget;
-        const lane = Number(zone.dataset.lane);
-        if(!Number.isFinite(lane))return;
+        if(!enabled || !root.classList.contains('visible'))return;
+        // 不拦截暂停按钮等 HUD 上真实可点击控件；这些控件位于更高 z-index，通常不会落到这里。
+        if(e.target.closest?.('button, input, select, textarea, a')) return;
         e.preventDefault();
-        zone.setPointerCapture?.(e.pointerId);
-        pointerToLane.set(e.pointerId, lane);
-        const set = lanePointers.get(lane) || new Set();
-        const firstPress = set.size === 0;
-        set.add(e.pointerId);
-        lanePointers.set(lane, set);
-        _setPressed(lane, true);
-        if(firstPress) Game.handleLaneDown(lane);
+        root.setPointerCapture?.(e.pointerId);
+        _pressLane(e.pointerId, _laneFromPoint(e.clientX, e.clientY));
     }
     function _onUp(e){
-        const lane = pointerToLane.get(e.pointerId);
-        if(lane === undefined)return;
-        e.preventDefault();
-        pointerToLane.delete(e.pointerId);
-        const set = lanePointers.get(lane);
-        if(set){
-            set.delete(e.pointerId);
-            if(set.size === 0){
-                lanePointers.delete(lane);
-                _setPressed(lane, false);
-                Game.handleLaneUp(lane);
-            }
+        if(pointerToLane.has(e.pointerId)){
+            e.preventDefault();
+            _releasePointer(e.pointerId);
         }
     }
     function init(){
         root = document.getElementById('mobile-touch-controls');
         if(!root)return;
-        root.querySelectorAll('.mobile-touch-zone').forEach(zone => {
-            zone.addEventListener('pointerdown', _onDown, { passive:false });
-            zone.addEventListener('pointerup', _onUp, { passive:false });
-            zone.addEventListener('pointercancel', _onUp, { passive:false });
-            zone.addEventListener('lostpointercapture', _onUp, { passive:false });
-        });
+        root.addEventListener('pointerdown', _onDown, { passive:false });
+        root.addEventListener('pointerup', _onUp, { passive:false });
+        root.addEventListener('pointercancel', _onUp, { passive:false });
+        root.addEventListener('lostpointercapture', _onUp, { passive:false });
+        window.addEventListener('blur', () => _clearTouches(true));
         sync();
     }
     return { init, show, hide, sync };
