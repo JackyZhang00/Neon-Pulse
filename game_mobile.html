@@ -1830,7 +1830,7 @@ Logo 开场页（最先显示）
     <div class="mobile-touch-zone mobile-zone-down"  data-lane="2" data-label="DOWN">↓</div>
     <div class="mobile-touch-zone mobile-zone-left"  data-lane="3" data-label="LEFT">←</div>
     <div class="mobile-touch-zone mobile-zone-center" data-lane="4" data-label="SPACE">SP</div>
-    <div class="mobile-touch-hint">点击轨道外侧方向区；点击中心大圆触发空格</div>
+    <div class="mobile-touch-hint">按住并滑动可连续切换方向；中心大圆为空格</div>
 </div>
 
 <!-- ============================================================
@@ -4493,7 +4493,7 @@ const Game = (() => {
    MobileControls 模块：手机端方向/中心圆触控输入
    - 点击中心圆：空格
    - 点击中心圆以外：按相对中心的方向自动归入 ↑ / → / ↓ / ←
-   - 因此轨道外侧几乎整块屏幕都可以作为方向按钮使用
+   - 按住滑动时会实时释放旧区域并按下新区，支持连续转圈操作
    ============================================================ */
 const MobileControls = (() => {
     let root = null;
@@ -4526,6 +4526,16 @@ const MobileControls = (() => {
     }
     function _laneFromPoint(clientX, clientY){
         const rect = root.getBoundingClientRect();
+
+        // pointer capture 会让手指滑出控件后仍继续收到 move。
+        // 一旦滑出屏幕/控件边界，视为离开所有按键区域，立即松开当前键。
+        if(
+            clientX < rect.left || clientX > rect.right ||
+            clientY < rect.top  || clientY > rect.bottom
+        ) {
+            return null;
+        }
+
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
         const dx = clientX - cx;
@@ -4540,6 +4550,7 @@ const MobileControls = (() => {
         return dy >= 0 ? 2 : 0;
     }
     function _pressLane(pointerId, lane){
+        if(lane === null || lane === undefined) return;
         if(pointerToLane.has(pointerId)) return;
         pointerToLane.set(pointerId, lane);
         const set = lanePointers.get(lane) || new Set();
@@ -4562,6 +4573,23 @@ const MobileControls = (() => {
                 Game.handleLaneUp(lane);
             }
         }
+    }
+    function _switchPointerLane(pointerId, nextLane){
+        const prevLane = pointerToLane.get(pointerId);
+
+        // 没有进入任何有效区域：保持松开状态，或从旧区域释放。
+        if(nextLane === null || nextLane === undefined){
+            _releasePointer(pointerId);
+            return;
+        }
+
+        // 仍在同一区域：继续长按，不重复触发。
+        if(prevLane === nextLane) return;
+
+        // 离开旧区域时立即 keyup，进入新区时立即 keydown。
+        // 这样玩家可以按住屏幕连续转圈，不必每次抬手。
+        if(prevLane !== undefined) _releasePointer(pointerId);
+        _pressLane(pointerId, nextLane);
     }
     function sync(){
         if(!root)return;
@@ -4589,7 +4617,10 @@ const MobileControls = (() => {
     }
     function _onMove(e){
         // 长按期间持续阻止浏览器默认手势，避免部分手机因选择/滚动/长按菜单触发 pointercancel。
-        if(pointerToLane.has(e.pointerId)) e.preventDefault();
+        if(pointerToLane.has(e.pointerId)){
+            e.preventDefault();
+            _switchPointerLane(e.pointerId, _laneFromPoint(e.clientX, e.clientY));
+        }
     }
     function _onUp(e){
         if(pointerToLane.has(e.pointerId)){
@@ -4602,6 +4633,7 @@ const MobileControls = (() => {
         if(!root)return;
         root.addEventListener('pointerdown', _onDown, { passive:false });
         root.addEventListener('pointermove', _onMove, { passive:false });
+        root.addEventListener('pointerrawupdate', _onMove, { passive:false });
         root.addEventListener('pointerup', _onUp, { passive:false });
         root.addEventListener('pointercancel', _onUp, { passive:false });
         // 不再在 lostpointercapture 时自动松开：部分移动浏览器长按会临时丢失 capture，上一版因此偶发“长按断开”。
