@@ -1464,6 +1464,11 @@ Logo 开场页（最先显示）
                 <input type="checkbox" id="input-strip-check">
             </div>
             <div class="setting-row">
+                <span>Beat Line Brightness<br><span style="font-size:11px;color:#666;font-weight:normal;">节拍线亮度</span></span>
+                <input type="range" id="beat-line-brightness-input" min="0" max="2" step="0.05" value="1.00">
+                <span id="beat-line-brightness-val" style="width:38px;text-align:right;">1.00</span>
+            </div>
+            <div class="setting-row">
                 <span>Character (立绘选择)</span>
                 <select id="character-select" style="width:150px;"></select>
             </div>
@@ -1607,15 +1612,11 @@ Logo 开场页（最先显示）
      ============================================================ -->
 <div id="update-modal" class="overlay" style="display:none;z-index:100;">
     <div id="update-box">
-        <div class="update-header">System Update // V1.8.0_alpha</div>
+        <div class="update-header">System Update // V1.8.1_alpha</div>
         <div class="update-content">
             <div class="update-list-item">
-                <span class="update-tag">NEW</span><strong>自动暂停</strong><br>
-                <span style="color:#aaa;">可以选择当无法达成FC或AP时自动暂停</span>
-            </div>
-            <div class="update-list-item">
-                <span class="update-tag">NEW</span><strong>歌曲版本切换</strong><br>
-                <span style="color:#aaa;">一些歌曲新增了多个封面与版本，可以选择喜欢的版本进行游戏</span>
+                <span class="update-tag">NEW</span><strong>小节线亮度设置</strong><br>
+                <span style="color:#aaa;">可以在设置里设置小节线的亮度</span>
             </div>
         </div>
         <div style="text-align:center;">
@@ -1741,7 +1742,7 @@ const INPUT_STRIP_ROW_H = 22;       // 每一行高度
 
 const CLEAR_TYPE       = { NONE:0, FAILED:1, CLEAR:2, FC:3, AP:4, AC:5 };
 
-const CURRENT_VERSION_KEY = 'V1.8.0_alpha';
+const CURRENT_VERSION_KEY = 'V1.8.1_alpha';
 
 /* ============================================================
    DataManager 模块（新功能2）—— 导入 / 导出 / 重置
@@ -2234,6 +2235,9 @@ const Settings = (() => {
         // 新增：下方读谱提示条总开关
         inputStripEnabled: true,
 
+        // 新增：节拍线 / 小节线亮度，0=隐藏，1=默认，2=更亮
+        beatLineBrightness: 1.0,
+
         bgmVolume: 0.8, sfxVolume: 0.8,
         autoSpace: false, selectedChar: 'nana',
         autoArrows: { up:false, right:false, down:false, left:false,ur:false, dr:false, dl:false, ul:false },
@@ -2299,6 +2303,7 @@ const Settings = (() => {
         bindCheck('auto-mode-check', 'autoMode');
         bindSelect('auto-pause-select', 'autoPauseGoal');
         bindCheck('input-strip-check', 'inputStripEnabled');
+        bindRange('beat-line-brightness-input', 'beatLineBrightness', 'beat-line-brightness-val', 2);
         _updateInputStripHint();
         bindCheck('hitsound-check',  'hitSound');
         bindCheck('auto-space-check','autoSpace');
@@ -2990,7 +2995,7 @@ const Game = (() => {
     let inputStripAlpha = 0;
 
     // 谱面节拍线
-    let timingPoints = [{ time: 0, bpm: 120 }];
+    let timingPoints = [{ time: 0, bpm: 120, beatsPerMeasure: 4, beatUnit: 4 }];
     let beatTimes = [];
 
     let animFrameId=null, isPlaying=false, isPaused=false, isCountingDown=false;
@@ -3044,6 +3049,13 @@ const Game = (() => {
     function _clamp(v, min, max){
         return Math.max(min, Math.min(max, v));
     }
+    function _beatLineBrightness(){
+        const v = Number(Settings.get().beatLineBrightness);
+        return _clamp(Number.isFinite(v) ? v : 1.0, 0, 2);
+    }
+    function _rgba(gray, alpha){
+        return `rgba(${gray},${gray},${gray},${_clamp(alpha, 0, 1)})`;
+    }
     // 线性进度：0（刚出现，圆心） -> 1（到判定圈）
     function _linearProgress(deltaToHit, travel){
         return _clamp(1 - deltaToHit / travel, 0, 1);
@@ -3061,11 +3073,42 @@ const Game = (() => {
         // DYNAMIC：现在的变化流速，靠近圆心慢，越往外越快
         return t * t * HIT_RADIUS;
     }
+    function _getTimeSignature(tp){
+        tp = tp || {};
+        let numerator = tp.beatsPerMeasure ?? tp.numerator;
+        let denominator = tp.beatUnit ?? tp.denominator;
+        if (Array.isArray(tp.timeSignature)) {
+            numerator = numerator ?? tp.timeSignature[0];
+            denominator = denominator ?? tp.timeSignature[1];
+        }
+        if (typeof tp.meter === 'string') {
+            const parts = tp.meter.split('/');
+            numerator = numerator ?? parts[0];
+            denominator = denominator ?? parts[1];
+        }
+        numerator = Math.max(1, Math.min(32, parseInt(numerator, 10) || 4));
+        denominator = parseInt(denominator, 10) || 4;
+        if (![1,2,4,8,16,32,64].includes(denominator)) denominator = 4;
+        return { beatsPerMeasure: numerator, beatUnit: denominator };
+    }
+    function _normalizeTimingPoint(tp){
+        const sig = _getTimeSignature(tp || {});
+        return {
+            time: Math.max(0, Number(tp?.time) || 0),
+            bpm: Math.max(1, Number(tp?.bpm) || 120),
+            beatsPerMeasure: sig.beatsPerMeasure,
+            beatUnit: sig.beatUnit
+        };
+    }
     function _buildBeatTimes(){
         beatTimes = [];
-        const points = timingPoints.length
-            ? timingPoints
-            : [{ time: 0, bpm: 120 }];
+        const points = (timingPoints.length ? timingPoints : [{ time: 0, bpm: 120, beatsPerMeasure: 4, beatUnit: 4 }])
+            .map(tp => _normalizeTimingPoint(tp))
+            .sort((a, b) => a.time - b.time);
+        if (!points.some(tp => Math.abs(tp.time) < 0.0001)) {
+            const first = points[0] || { bpm: 120, beatsPerMeasure: 4, beatUnit: 4 };
+            points.unshift({ time: 0, bpm: first.bpm || 120, beatsPerMeasure: first.beatsPerMeasure || 4, beatUnit: first.beatUnit || 4 });
+        }
         const lastNoteTime = notes.reduce((m, n) => {
             return Math.max(m, n.time + (n.duration || 0));
         }, 0);
@@ -3073,21 +3116,33 @@ const Game = (() => {
             audioBuffer?.duration || 0,
             lastNoteTime + 4
         );
+        let baseMeasure = 0;
         for(let i = 0; i < points.length; i++){
             const cur = points[i];
             const next = points[i + 1];
             const start = Math.max(0, cur.time);
-            const end = next ? next.time : endTime;
+            const end = next ? Math.min(next.time, endTime) : endTime;
+            if (end < start) continue;
             const interval = 60 / (cur.bpm || 120);
-            for(let t = start; t <= end; t += interval){
+            const beatsPerMeasure = Math.max(1, cur.beatsPerMeasure || 4);
+            const includeEnd = !next || end >= endTime - 0.0001;
+            for(let t = start, beatIndex = 0; (includeEnd ? t <= end + 0.0001 : t < end - 0.0001); t += interval, beatIndex++){
                 if(t >= 0 && t <= endTime){
+                    const isMeasureLine = beatIndex % beatsPerMeasure === 0;
                     beatTimes.push({
                         time: Number(t.toFixed(6)),
                         bpm: cur.bpm,
-                        timingIndex: i
+                        timingIndex: i,
+                        beatIndex,
+                        beatsPerMeasure,
+                        beatUnit: cur.beatUnit || 4,
+                        isMeasureLine,
+                        measureNumber: baseMeasure + Math.floor(beatIndex / beatsPerMeasure) + 1
                     });
                 }
             }
+            const measureDur = interval * beatsPerMeasure;
+            if (end > start) baseMeasure += Math.max(0, Math.ceil(((end - start) - 1e-7) / measureDur));
         }
         // 防止 timingPoint 边界附近重复
         beatTimes.sort((a, b) => a.time - b.time);
@@ -3097,17 +3152,19 @@ const Game = (() => {
     }
     function _drawBeatGuides(cx, cy, now, travel){
         if(!beatTimes.length) return;
+        const brightness = _beatLineBrightness();
+        if (brightness <= 0.001) return;
         beatTimes.forEach((beat, index) => {
             const dh = beat.time - now;
             if(dh < 0 || dh > travel) return;
             const r = _motionRadius(dh, travel);
             if(r <= 0 || r > HIT_RADIUS) return;
-            const isStrong = index % 4 === 0;
+            const isStrong = !!beat.isMeasureLine;
             CTX.beginPath();
             CTX.arc(cx, cy, r, 0, Math.PI * 2);
             CTX.strokeStyle = isStrong
-                ? 'rgba(220,220,220,0.26)'
-                : 'rgba(180,180,180,0.16)';
+                ? _rgba(220, 0.26 * brightness)
+                : _rgba(180, 0.16 * brightness);
             CTX.lineWidth = isStrong ? 2 : 1;
             CTX.stroke();
         });
@@ -3243,6 +3300,42 @@ const Game = (() => {
         return false;
     }
 
+    function _drawStripBeatGuides(axisX, axisW, rowTop, rowH, rows, top, now, timeToX) {
+        if (!beatTimes.length) return;
+        const brightness = _beatLineBrightness();
+        if (brightness <= 0.001) return;
+
+        const y1 = rowTop - 6;
+        const y2 = rowTop + rows.length * rowH + 2;
+        const visibleStart = now - INPUT_STRIP_PAST;
+        const visibleEnd = now + INPUT_STRIP_LOOKAHEAD;
+
+        CTX.save();
+        beatTimes.forEach(beat => {
+            if (beat.time < visibleStart - 0.0001 || beat.time > visibleEnd + 0.0001) return;
+            const x = timeToX(beat.time);
+            if (x < axisX - 2 || x > axisX + axisW + 2) return;
+            const isStrong = !!beat.isMeasureLine;
+            CTX.beginPath();
+            CTX.moveTo(x, y1);
+            CTX.lineTo(x, y2);
+            CTX.strokeStyle = isStrong
+                ? _rgba(235, 0.32 * brightness)
+                : _rgba(190, 0.15 * brightness);
+            CTX.lineWidth = isStrong ? 2 : 1;
+            CTX.stroke();
+
+            if (isStrong && beat.measureNumber) {
+                CTX.font = '900 8px monospace';
+                CTX.textAlign = 'center';
+                CTX.textBaseline = 'middle';
+                CTX.fillStyle = _rgba(235, 0.45 * brightness);
+                CTX.fillText(`M${beat.measureNumber}`, x, top + 15);
+            }
+        });
+        CTX.restore();
+    }
+
     function _drawInputStrip(cx, cy, now) {
         const rows = _getStripRows();
         const visibleNotes = notes.filter(n => {
@@ -3325,6 +3418,8 @@ const Game = (() => {
         CTX.fillRect(axisX, rowTop - 6, goodW, rows.length * rowH + 2);
         CTX.fillStyle = 'rgba(0,255,255,0.08)';
         CTX.fillRect(axisX, rowTop - 6, perfectW, rows.length * rowH + 2);
+        // 读谱提示条中的节拍线 / 小节线，和主画面使用同一套变拍号数据
+        _drawStripBeatGuides(axisX, axisW, rowTop, rowH, rows, top, now, timeToX);
         // 每个按键一行
         rows.forEach((row, i) => {
             const y = rowTop + i * rowH + rowH / 2;
@@ -3696,7 +3791,7 @@ const Game = (() => {
                     const sr=AudioManager.ctx.sampleRate;
                     audioBuffer=AudioManager.ctx.createBuffer(1,sr*30,sr);
                     const d=audioBuffer.getChannelData(0); for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*0.1;
-                    notes=[]; events=[{time:5,type:'shake'},{time:10,type:'shake'}];
+                    notes=[]; events=[{time:5,type:'shake'},{time:10,type:'shake'}]; timingPoints=[{time:0,bpm:120,beatsPerMeasure:4,beatUnit:4}];
                     for(let i=0;i<30;i++)notes.push({time:2+i*0.8,lane:i%5,duration:i%4===0?1:0});
                     res();
                 }));
@@ -3708,12 +3803,13 @@ const Game = (() => {
                         events = data.events || [];
                         timingPoints = Array.isArray(data.timingPoints) && data.timingPoints.length
                             ? data.timingPoints
-                                .map(tp => ({
-                                    time: Number(tp.time) || 0,
-                                    bpm: Number(tp.bpm) || 120
-                                }))
+                                .map(tp => _normalizeTimingPoint(tp))
                                 .sort((a, b) => a.time - b.time)
-                            : [{ time: 0, bpm: 120 }];
+                            : [{ time: 0, bpm: 120, beatsPerMeasure: 4, beatUnit: 4 }];
+                        if (!timingPoints.some(tp => Math.abs(tp.time) < 0.0001)) {
+                            const first = timingPoints[0] || { bpm: 120, beatsPerMeasure: 4, beatUnit: 4 };
+                            timingPoints.unshift({ time: 0, bpm: first.bpm || 120, beatsPerMeasure: first.beatsPerMeasure || 4, beatUnit: first.beatUnit || 4 });
+                        }
                     })
                 );
             }
