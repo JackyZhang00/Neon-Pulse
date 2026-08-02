@@ -531,5 +531,30 @@
       "hard": null,
       "expert": "assets/Blessing Chord/expert.json"
     }
+  },
+  {
+    "id": "月に叢雲華に風",
+    "title": "月に叢雲華に風",
+    "artist": "Senya（幽閉サテライトト）",
+    "charter": "Nana_Chan（SR Atelier）",
+    "lyricist":"かませ虎",
+    "composer":"ZUN",
+    "arranger":"Iceon",
+    "tags": ["东方Project", "Official"],
+    "cover": "assets/月に叢雲華に風/cover.jpg",
+    "audio": "assets/月に叢雲華に風/song.ogg",
+    "preview_start": 63.5,
+    "levels": {
+      "easy": 3,
+      "normal": 6,
+      "hard": 6,
+      "expert": 6
+    },
+    "charts": {
+      "easy": null,
+      "normal": null,
+      "hard": null,
+      "expert": "assets/月に叢雲華に風/expert.json"
+    }
   }
 ]
